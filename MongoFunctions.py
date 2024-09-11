@@ -19,6 +19,19 @@ def connect():
             return None
         else:
             return collection
+        
+# Function to create a new class object
+def create_class(collection, class_data):
+    collection.insert_one(class_data)
+
+# Function to create a new relationship object
+def create_relationship(collection, relationship_data):
+    collection.insert_one(relationship_data)
+
+# Function to create a new attribute object
+def create_attribute(collection, attribute_data):
+    collection.insert_one(attribute_data)
+
     
 
 
