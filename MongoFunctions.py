@@ -1,9 +1,9 @@
 import pymongo
 import string
 
-USERNAMES = ["derrickboyer3"]
-PASSWORDS = ["bigbangtheorY"]
-DATABASES = ["UML_Testing"]
+USERNAMES = [""]
+PASSWORDS = [""]
+DATABASES = [""]
 
 
 
