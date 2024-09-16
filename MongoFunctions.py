@@ -20,6 +20,26 @@ def connect():
         else:
             return collection
         
+# Function to create a new user collection
+def create_collection():
+    print("Username: ")
+    username = input()
+    print("Password: ")
+    password = input()
+    uri = "mongodb+srv://derrickboyer3:bigbangtheorY@atlascluster.n5ktxxk.mongodb.net/"
+    client = pymongo.MongoClient(uri)
+    db = client.get_database("UML_Collections")
+    collection = db.get_collection(username)
+    data = collection.find_one({ "username": username, "password": password })
+    if data is not None:
+        print("Username already exists.")
+        return None
+    db.create_collection(username)
+    collection = db.get_collection(username)
+    collection.insert_one({ "username": username, "password": password })
+    return collection
+
+        
 
 
 
@@ -87,6 +107,11 @@ def delete_relationship(collection, project_name, relationship_type, class1_name
 # Function to create a new attribute object
 def create_attribute(collection, project_name, class_name, attribute_data):
     collection.find_one_and_update({ "object type": "class", "project": project_name, "name": class_name }, { "$push": { "attributes": attribute_data } })
+
+# Function to get an attribute object
+def get_attribute(collection, project_name, class_name, attribute_name):
+    data = collection.find_one({ "object type": "class", "project": project_name, "name": class_name, "attributes.name": attribute_name }, { "attributes.$": 1 })
+    return data
 
 # Function to rename an attribute object
 def rename_attribute(collection, project_name, class_name, attribute_name, new_name):

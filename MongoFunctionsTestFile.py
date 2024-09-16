@@ -2,7 +2,8 @@ import MongoFunctions
 
 
 
-
+# Tests for getting or creating new collecions
+# Comment out which way you want to test
 
 # Test connecting to the database
 collection = MongoFunctions.connect()
@@ -11,6 +12,14 @@ if collection is None:
     exit()
 else:
     print("Welcome to the UML Editor!")
+
+# Test creating a new collection
+#collection = MongoFunctions.create_collection()
+#if collection is None:
+#    print("Username already exists or some other error making the collection.")
+#    exit()
+#else:
+#    print("Collection created successfully.")
 
 
 
@@ -85,6 +94,10 @@ attribute_object = {
 }
 MongoFunctions.create_attribute(collection, "Test Project", "NewTestClass", attribute_object)
 data = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
+print(data)
+
+# Test getting an attribute from a class in the database
+data = MongoFunctions.get_attribute(collection, "Test Project", "NewTestClass", "testAttribute2")
 print(data)
 
 # Test renaming an attribute in the database
