@@ -10,9 +10,9 @@ def add_project(collection, name):
     if data is not None: return data
 
     project_object = {
-    "object type": "project",
-    "name": name,
-}
+        "object type": "project",
+        "name": name,
+    }
 
     MongoFunctions.create_project(collection, project_object)
 
@@ -58,12 +58,12 @@ def add_relationship(collection, project, type, class1_name, class2_name):
     if data is not None: return data
 
     relationship_object = {
-    "object type": type,
-    "project": project,
-    "relationship type": type,
-    "class1": class1_name,
-    "class2": class2_name,
-}
+        "object type": type,
+        "project": project,
+        "relationship type": type,
+        "class1": class1_name,
+        "class2": class2_name,
+    }
 
     MongoFunctions.create_relationship(collection, relationship_object)
 
@@ -83,10 +83,10 @@ def add_attribute(collection, project, class_name, attribute_name, type, value):
     if data is not None: return data
 
     attribute_object = {
-    "object type": "attribute",
-    "name": attribute_name,
-    "type": type,
-    "value": value,
+        "object type": "attribute",
+        "name": attribute_name,
+        "type": type,
+        "value": value,
     }
 
     MongoFunctions.create_attribute(collection, project, class_name, attribute_object)
