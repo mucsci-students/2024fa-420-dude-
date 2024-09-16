@@ -5,6 +5,10 @@ import MongoFunctions
 
 def add_project(collection, name):
 
+    if len(name) < 1:
+        print("Please enter a valid name!")
+        return None
+    
     data = MongoFunctions.get_project(collection, name)
 
     if data is not None: return data
@@ -27,6 +31,10 @@ def add_project(collection, name):
 
 
 def add_class(collection, project, name):
+    
+    if len(name) < 1:
+        print("Please enter a valid name!")
+        return None
     
     data = MongoFunctions.get_class(collection, project, name)
 
@@ -57,6 +65,10 @@ def add_relationship(collection, project, type, class1_name, class2_name):
 
     if data is not None: return data
 
+    if type is not "Aggregation" or "Composition":
+        print("Type is not a valid relationship type!")
+        return None
+
     relationship_object = {
         "object type": type,
         "project": project,
@@ -78,6 +90,10 @@ def add_relationship(collection, project, type, class1_name, class2_name):
 
 def add_attribute(collection, project, class_name, attribute_name, type, value):
     
+    if len(attribute_name) < 1:
+        print("Please enter a valid name!")
+        return None
+
     data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
 
     if data is not None: return data
@@ -144,6 +160,9 @@ def rename_class(collection, project, current_name, new_name):
     if data is None:
         print("There was an error renaming this class!")
     else:
+        if len(new_name) < 1:
+            print("Please enter a valid name!")
+            return None
         MongoFunctions.rename_class(collection, project, current_name, new_name)
 
 def rename_attribute(collection, project, class_name, current_name, new_name):
@@ -151,6 +170,9 @@ def rename_attribute(collection, project, class_name, current_name, new_name):
     if data is None:
         print("There was an error deleting this class!")
     else:
+        if len(new_name) < 1:
+            print("Please enter a valid name!")
+            return None
         MongoFunctions.rename_attribute(collection, project, class_name, current_name, new_name)
 
 
