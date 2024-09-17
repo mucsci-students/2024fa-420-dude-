@@ -11,7 +11,9 @@ def add_project(collection, name):
     
     data = MongoFunctions.get_project(collection, name)
 
-    if data is not None: return data
+    if data is not None: 
+        print("Project already exists. Returning data for preexisting project.")
+        return data
 
     project_object = {
         "object type": "project",
@@ -65,7 +67,7 @@ def add_relationship(collection, project, type, class1_name, class2_name):
 
     if data is not None: return data
 
-    if type is not "Aggregation" or "Composition":
+    if type != "Aggregation" or "Composition":
         print("Type is not a valid relationship type!")
         return None
 
