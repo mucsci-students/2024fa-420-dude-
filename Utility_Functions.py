@@ -38,9 +38,15 @@ def add_class(collection, project, name):
         print("Please enter a valid name!")
         return None
     
+    data = MongoFunctions.get_project(collection, project)
+    if data is None:
+        print("Project does not exist!")
+        return None
+    
     data = MongoFunctions.get_class(collection, project, name)
-
-    if data is not None: return data
+    if data is not None: 
+        print("Class already exists. Returning data for preexisting class.")
+        return data
 
     class_object = {
         "object type": "class",
