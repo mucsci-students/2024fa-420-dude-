@@ -45,14 +45,16 @@ def login_user():
     print("Use \"1\" to sign in or \"2\" to create an account.")
     user_input = input("DUML: ")
     if user_input == "1":
-        collection = connect()
+        collection = MongoFunctions.connect()
         if collection is None:
             print("Invalid login credentials")
             return login_user()
+        return collection
     elif user_input == "2":
-        collection = create_collection()
+        collection = MongoFunctions.create_collection()
         if  collection is None:
             print("That username already exist")
+            print(collection)
             return collection
     else :
         login_user()
