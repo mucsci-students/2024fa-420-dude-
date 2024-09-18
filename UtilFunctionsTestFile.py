@@ -69,8 +69,56 @@ if data is None:
 
 
 # Tests for relationship functions
+print("\nTesting relationship functions:")
+
+Utility_Functions.add_class(collection, "Test Project", "Test Class2")
+
+# Test to create a realationship that doesn't yet exist.
+print("\n\tCreating a relationship that doesn't yet exist:")
+data = Utility_Functions.add_relationship(collection, "Test Project", "Composition", "Test Class", "Test Class2")
+if data is not None:
+    print("\t\tSuccessfully created realtionship between Test Class and Test Class2")
+    print("\t\t" + str(data))
+
+# Test to create a realationship that already exists.
+print("\n\tCreating a relationship that already exists:")
+data = Utility_Functions.add_relationship(collection, "Test Project", "Composition", "Test Class", "Test Class2")
+if data is not None:
+    print("\t\tSuccessfully retrieved realtionship between Test Class and Test Class2")
+    print("\t\t" + str(data))
+
+# Test to create a realationship where one the classes doesn't exist.
+print("\n\tCreating a realationship where one the classes doesn't exist:")
+data = Utility_Functions.add_relationship(collection, "Test Project", "Composition", "Test Class", "I Don't Exist")
+if data is not None:
+    print("\t\tSuccessfully handled realtionship between Test Class and Test Class2")
+    print("\t\t" + str(data))
+
+# Test to create a realationship where the relationship type is invalid.
+print("\n\tCreating a realationship where the relationship type is invalid:")
+data = Utility_Functions.add_relationship(collection, "Test Project", "Ionic", "Test Class", "Test Class2")
+if data is not None:
+    print("\t\tSuccessfully handled invalid realtionship type.")
+    print("\t\t" + str(data))
 
 
-
-
+    
 # Tests for attribute functions
+
+print("\n\tCreating an attribute that doesn't yet exist:")
+data = Utility_Functions.add_attribute(collection, "Test Project", "Test Class", "Test Atrribute", "int", 11)
+if data is not None:
+    print("\t\tSuccessfully created attribute.")
+    print("\t\t" + str(data))
+
+print("\n\tCreating an attribute that already exists:")
+data = Utility_Functions.add_attribute(collection, "Test Project", "Test Class", "Test Atrribute", "int", 11)
+if data is not None:
+    print("\t\tSuccessfully retreived attribute.")
+    print("\t\t" + str(data))
+
+print("\n\tCreating an attribute that already exists:")
+data = Utility_Functions.add_attribute(collection, "Test Project", "I Dont Exist", "Test Atrribute", "int", 11)
+if data is not None:
+    print("\t\tSuccessfully handled faulty attribute")
+    print("\t\t" + str(data))
