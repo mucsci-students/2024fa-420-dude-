@@ -80,6 +80,11 @@ def rename_class(collection, project_name, class_name, new_name):
 def delete_class(collection, project_name, class_name):
     collection.delete_one({ "object type": "class", "project": project_name, "name": class_name })
 
+# Function to list all classes in a project
+def list_classes(collection, project_name):
+    data = collection.find({ "object type": "class", "project": project_name })
+    return data
+
 
 
 
@@ -97,6 +102,11 @@ def get_relationship(collection, project_name, relationship_type, class1_name, c
 # Function to delete a relationship object
 def delete_relationship(collection, project_name, relationship_type, class1_name, class2_name):
     collection.delete_one({ "object type": "relationship", "project": project_name, "relationship type": relationship_type, "class1": class1_name, "class2": class2_name })
+
+# Function to list all relationships in a project
+def list_relationships(collection, project_name):
+    data = collection.find({ "object type": "relationship", "project": project_name })
+    return data
 
 
 

@@ -60,6 +60,11 @@ MongoFunctions.rename_class(collection, "Test Project", "TestClass", "NewTestCla
 class_object2 = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
 print(class_object2)
 
+# Test getting all classes in a project from the database
+class_objects = MongoFunctions.list_classes(collection, "Test Project")
+for class_object in class_objects:
+    print(class_object)
+
 
 
 
@@ -77,8 +82,15 @@ MongoFunctions.create_relationship(collection, relationship_object)
 data = MongoFunctions.get_relationship(collection, "Test Project", "association", "NewTestClass", "TestClass")
 print(data)
 
+# Test to list all relationships in a project
+relationship_objects = MongoFunctions.list_relationships(collection, "Test Project")
+for relationship_object in relationship_objects:
+    print(relationship_object)
+
 # Test deleting a Relationship from the database
 MongoFunctions.delete_relationship(collection, "Test Project", "association", "NewTestClass", "TestClass")
+
+
 
 
 
