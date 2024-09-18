@@ -73,12 +73,16 @@ def add_relationship(collection, project, type, class1_name, class2_name):
 
     if data is not None: return data
 
-    if type != "Aggregation" or "Composition":
+    if (MongoFunctions.get_class(collection, project, class1_name) == None) or (MongoFunctions.get_class(collection, project, class2_name) == None):
+        print("One or more classes does not exist!")
+        return None
+
+    if (type != "Aggregation") and (type != "Composition"):
         print("Type is not a valid relationship type!")
         return None
 
     relationship_object = {
-        "object type": type,
+        "object type": "relationship",
         "project": project,
         "relationship type": type,
         "class1": class1_name,
@@ -100,6 +104,10 @@ def add_attribute(collection, project, class_name, attribute_name, type, value):
     
     if len(attribute_name) < 1:
         print("Please enter a valid name!")
+        return None
+
+    if MongoFunctions.get_class(collection, project, class_name) == None:
+        print("This class doesn't exist!")
         return None
 
     data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
@@ -184,5 +192,5 @@ def rename_attribute(collection, project, class_name, current_name, new_name):
         MongoFunctions.rename_attribute(collection, project, class_name, current_name, new_name)
 
 
-#Tests
+
 
