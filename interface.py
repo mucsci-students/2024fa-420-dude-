@@ -54,7 +54,6 @@ def login_user():
         collection = MongoFunctions.create_collection()
         if  collection is None:
             print("That username already exist")
-            print(collection)
             return collection
     else :
         login_user()
@@ -77,8 +76,6 @@ def load_or_create_project(collection):
 ##################  Main Execution Section  ##################
 
 collection = login_user()
-data = collection.find_one({"username": "testUser", "password": "testPassword"})
-print(data)
 # Load or Create Project
 project = load_or_create_project(collection)
 
