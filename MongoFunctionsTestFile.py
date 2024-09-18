@@ -6,20 +6,22 @@ import MongoFunctions
 # Comment out which way you want to test
 
 # Test connecting to the database
+print("Connecting to the database...")
 collection = MongoFunctions.connect()
 if collection is None:
-    print("Incorrect username or password.")
+    print("\tIncorrect username or password.")
     exit()
 else:
-    print("Welcome to the UML Editor!")
+    print("\tWelcome to the UML Editor!")
 
 # Test creating a new collection
+#print("Creating a new user...")
 #collection = MongoFunctions.create_collection()
 #if collection is None:
-#    print("Username already exists or some other error making the collection.")
+#    print("\tUsername already exists or some other error making the collection.")
 #    exit()
 #else:
-#    print("Collection created successfully.")
+#    print("\tCollection created successfully.")
 
 
 
@@ -27,21 +29,26 @@ else:
 
 # Project functions tests
 # Test adding a Project to the database
+print("\nTesting Project functions:")
 project_object = {
     "object type": "project",
     "name": "Test Project",
 }
+
+# Test creating a project
+print("\n\tCreating and retrieving a project:")
 MongoFunctions.create_project(collection, project_object)
 
 # Test getting a Project from the database
 project_object = MongoFunctions.get_project(collection, "Test Project")
-print(project_object)
+print("\t\t" + str(project_object))
 
 
 
 
 
 # Class functions tests
+print("\n\nTesting Class functions:")
 # Test adding a Class to the database
 class_object = {
     "object type": "class",
@@ -49,46 +56,82 @@ class_object = {
     "name": "TestClass",
     "attributes": [{ "object type": "attribute", "name": "testAttribute1", "type": "int", "value": 0 }],
 }
+
+# Test creating a class
+print("\n\tCreating and retrieving a class:")
 MongoFunctions.create_class(collection, class_object)
 
 # Test getting a class from the database
 class_object = MongoFunctions.get_class(collection, "Test Project", "TestClass")
-print(class_object)
+print("\t\t" + str(class_object))
 
 # Test renaming a class in the database
+print("\n\tRenaming a class:")
 MongoFunctions.rename_class(collection, "Test Project", "TestClass", "NewTestClass")
 class_object2 = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
-print(class_object2)
+print("\t\t" + str(class_object2))
 
 # Test getting all classes in a project from the database
+print("\n\tListing all classes in a project:")
+class_object2 = {
+    "object type": "class",
+    "project": "Test Project",
+    "name": "TestClass2",
+    "attributes": [{ "object type": "attribute", "name": "testAttribute2", "type": "string", "value": "test value" }]
+}
+MongoFunctions.create_class(collection, class_object2)
 class_objects = MongoFunctions.list_classes(collection, "Test Project")
 for class_object in class_objects:
-    print(class_object)
+    print("\t\t" + str(class_object))
+
+# Test deleting a class from the database
+print("\n\tDeleting a class:")
+MongoFunctions.delete_class(collection, "Test Project", "NewTestClass")
+data = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
+print("\t\t" + str(data))
+
+# Recreating class for later use
+print("\n\tRecreating classes for later use.")
+class_object3 = {
+    "object type": "class",
+    "project": "Test Project",
+    "name": "TestClass",
+    "attributes": [{ "object type": "attribute", "name": "testAttribute1", "type": "int", "value": 0 }],
+}
+MongoFunctions.create_class(collection, class_object3)
+
 
 
 
 
 
 # Relationship functions tests
+print("\n\nTesting Relationship functions:")
 # Test adding a Relationship to the database
 relationship_object = {
     "object type": "relationship",
     "project": "Test Project",
     "relationship type": "association",
-    "class1": "NewTestClass",
-    "class2": "TestClass",
+    "class1": "TestClass",
+    "class2": "TestClass2",
 }
+
+print("\n\tCreating and retrieving a relationship:")
 MongoFunctions.create_relationship(collection, relationship_object)
-data = MongoFunctions.get_relationship(collection, "Test Project", "association", "NewTestClass", "TestClass")
-print(data)
+data = MongoFunctions.get_relationship(collection, "Test Project", "association", "TestClass", "TestClass2")
+print("\t\t" + str(data))
 
 # Test to list all relationships in a project
+print("\n\tListing all relationships in a project:")
 relationship_objects = MongoFunctions.list_relationships(collection, "Test Project")
 for relationship_object in relationship_objects:
-    print(relationship_object)
+    print("\t\t" + str(relationship_object))
 
 # Test deleting a Relationship from the database
-MongoFunctions.delete_relationship(collection, "Test Project", "association", "NewTestClass", "TestClass")
+print("\n\tDeleting a relationship:")
+MongoFunctions.delete_relationship(collection, "Test Project", "association", "TestClass", "TestClass2")
+data = MongoFunctions.get_relationship(collection, "Test Project", "association", "TestClass", "TestClass2")
+print("\t\t" + str(data))
 
 
 
@@ -96,7 +139,8 @@ MongoFunctions.delete_relationship(collection, "Test Project", "association", "N
 
 
 
-# Attribute functions tests
+# Attribute functions tests\
+print("\n\nTesting Attribute functions: ")
 # Test adding an attribute to a class in the database
 attribute_object = {
     "object type": "attribute",
@@ -104,23 +148,27 @@ attribute_object = {
     "type": "string",
     "value": "test value",
 }
-MongoFunctions.create_attribute(collection, "Test Project", "NewTestClass", attribute_object)
-data = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
-print(data)
+print("\n\tCreating and retrieving an attribute:")
+MongoFunctions.create_attribute(collection, "Test Project", "TestClass", attribute_object)
+data = MongoFunctions.get_class(collection, "Test Project", "TestClass")
+print("\t\t" + str(data))
 
 # Test getting an attribute from a class in the database
-data = MongoFunctions.get_attribute(collection, "Test Project", "NewTestClass", "testAttribute2")
-print(data)
+print("\n\tGetting an attribute:")
+data = MongoFunctions.get_attribute(collection, "Test Project", "TestClass", "testAttribute2")
+print("\t\t" + str(data))
 
 # Test renaming an attribute in the database
-MongoFunctions.rename_attribute(collection, "Test Project", "NewTestClass", "testAttribute2", "newTestAttribute2")
-data = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
-print(data)
+print("\n\tRenaming an attribute:")
+MongoFunctions.rename_attribute(collection, "Test Project", "TestClass", "testAttribute2", "newTestAttribute2")
+data = MongoFunctions.get_class(collection, "Test Project", "TestClass")
+print("\t\t" + str(data))
 
 # Test deleting an attribute from a class in the database
-MongoFunctions.delete_attribute(collection, "Test Project", "NewTestClass", "testAttribute1")
-data = MongoFunctions.get_class(collection, "Test Project", "NewTestClass")
-print(data)
+print("\n\tDeleting an attribute:")
+MongoFunctions.delete_attribute(collection, "Test Project", "TestClass", "testAttribute1")
+data = MongoFunctions.get_class(collection, "Test Project", "TestClass")
+print("\t\t" + str(data))
 
 
  
