@@ -5,27 +5,31 @@ import string
 
 # Function to connect the user to their designated collection
 def connect():
-    print("Username: ")
-    username = input()
-    print("Password: ")
-    password = input()
+    # Get the username and password from the user
+    username = input("Username: ")
+    password = input("Password: ")
+
+    # Attempt to get their respective collection from the database
     uri = "mongodb+srv://derrickboyer3:bigbangtheorY@atlascluster.n5ktxxk.mongodb.net/"
     client = pymongo.MongoClient(uri)
     db = client.get_database("UML_Collections")
     collection = db.get_collection(username)
-    data = collection.find({ "username": username }, { "password": password })
-    for item in data:
-        if item is None:
-            return None
-        else:
-            return collection
+    data = collection.find_one({ "username": username }, { "password": password })
+
+    # If the user does not exist, return None, otherwise return the collection
+    if data is None:
+        return None
+    else:
+        return collection
         
 # Function to create a new user collection
 def create_collection():
-    print("Username: ")
-    username = input()
-    print("Password: ")
-    password = input()
+    # Get the new username and password from the user
+    username = input("Username: ")
+    password = input("Password: ")
+
+    # Connect to the database and get the user's collection if it already exists
+    # If it does, return None, otherwise create the collection and return it
     uri = "mongodb+srv://derrickboyer3:bigbangtheorY@atlascluster.n5ktxxk.mongodb.net/"
     client = pymongo.MongoClient(uri)
     db = client.get_database("UML_Collections")
