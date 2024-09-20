@@ -1,4 +1,3 @@
-#!/bin/python3
 # This is the file that will be used for programming the interface.
 #maybe use argpars
 
@@ -56,20 +55,24 @@ def login_user():
             print("That username already exist")
             return collection
     else :
-        login_user()
+        return login_user()
 
 def load_or_create_project(collection):
     user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
     command = user_input.split()
+    # Make sure to add checks to other parts too.
     if len(command) > 2:
         print("Too many arguments, \n\tHint names can't have spaces")
+        return load_or_create_project(collection)
+    if len(command) < 2:
+        print("You must provide a name for the project you wish to load or creat.")
         return load_or_create_project(collection)
     if command[0] == "load":
         return get_project(collection, command[1])
     elif command[0] == "create":
-        return add_project(collection, command[0])
+        return add_project(collection, command[1])
     else: 
-        return load_or_create_project()
+        return load_or_create_project(collection)
 
 
 
@@ -94,38 +97,39 @@ while command[0] != "exit":
         case "mkcls":
             if len(command) <= 1:
                 print("Must provide a valid name\n\tplease use command: \"help\" for proper use.")
-                continue
-            add_class(collection, project, command[1]) 
+            else: 
+                print(project)
+                add_class(collection, project, command[1]) 
         case "rmcls":
             if len(command) <= 1:
                 print("Must provide a valid class name \n\tplease use command: \"help\" for proper use.")
-                continue
-            delete_class(collection, project, command[1])
+            else:
+                delete_class(collection, project, command[1])
         case "chngcls":
             if len(command) <= 2:
                 print("Must provide a new name and valid class \n\tplease use command: \"help\" for proper use.")
-                continue
-            rename_class(collection, project, command[1], command[2])
+            else: 
+                rename_class(collection, project, command[1], command[2])
         case "mkrel":
             if len(command) <= 2:
                 print("Must provide two classes \n\tplease use command: \"help\" for proper use.")
-                continue
-            add_relationship(collection, project, command[1], command[2], command[3])
+            else:
+                add_relationship(collection, project, command[1], command[2], command[3])
         case "rmrel":
             if len(command) <= 2:
                 print("Must provide two classes \n\tplease use command: \"help\" for proper use.")
-                continue
-            delete_relationship(collection, project, command[1], command[2], command[3])
+            else: 
+                delete_relationship(collection, project, command[1], command[2], command[3])
         case "mkattr":
             if len(command) <= 2:
                 print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
-                continue
-            create_attribute(collection, project, command[1], command[2], command[3])
+            else:
+                create_attribute(collection, project, command[1], command[2], command[3])
         case "rmattr":
             if len(command) <= 2:
                 print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
-                continue
-            delete_attribute(collection, project, command[1], command[2], command[3])
+            else: 
+                delete_attribute(collection, project, command[1], command[2], command[3])
         case "save":
             print("save is not yet implemented")
         case "load":
@@ -135,8 +139,8 @@ while command[0] != "exit":
         case "clsinfo":
             if len(command) <= 1:
                 print("Must provide a valid class to display\n\tplease use command: \"help\" for proper use.")
-                continue
-            print("clsinfo is not yet implemented")
+            else:
+                print("clsinfo is not yet implemented")
         case "lsrel":
             print("lsrel is not yet implemented")
         case "help":
