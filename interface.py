@@ -110,7 +110,6 @@ while command[0] != "exit":
             if len(command) <= 1:
                 print("Must provide a valid name\n\tplease use command: \"help\" for proper use.")
             else: 
-                print(project)
                 add_class(collection, project, command[1]) 
         case "rmcls":
             if len(command) <= 1:
