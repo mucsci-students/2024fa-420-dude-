@@ -128,7 +128,7 @@ def add_attribute(collection, project, class_name, attribute_name, type, value):
     if data is not None: 
         return data
     else:
-        print("The was an error in making this attribute!")
+        print("There was an error in making this attribute!")
         return None 
 
 

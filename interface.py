@@ -17,11 +17,13 @@ options = '''Commmands:
         - Rename [Class] with [New Name] 
     mkrel [Type] [Class 1] [Class 2] : 
         - Creat a new relationship between [Class 1] and [Class 2]
-    rmrel [Class 1] [Class 2] : 
+        - Type must be of Aggregation or Composition
+    rmrel [Type] [Class 1] [Class 2] : 
         - Delete a relationship between [Class 1] and [Class 2]
-    mkattr [Class] [Name] [Type] : 
+        - Type must be of Aggregation or Composition
+    mkattr [Class] [Name] [Type] [Value] : 
         - Creat an attribute for [Class] with [Name]
-    rmattr [Class] [Name] [Type] : 
+    rmattr [Class] [Name] [Type] [Value] : 
         - Delete an attribute with [Name] from [Class]
     save : 
         - Save the current project 
@@ -57,9 +59,7 @@ def login_user():
     else :
         return login_user()
 
-def load_or_create_project(collection):
-    user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
-    command = user_input.split()
+def load_or_create_project(collection, command):
     # Make sure to add checks to other parts too.
     if len(command) > 2:
         print("Too many arguments, \n\tHint names can't have spaces")
@@ -68,18 +68,31 @@ def load_or_create_project(collection):
         print("You must provide a name for the project you wish to load or creat.")
         return load_or_create_project(collection)
     if command[0] == "load":
-        return get_project(collection, command[1])
+        data = get_project(collection, command[1])
+        if data == None:
+            print("Project does not exist")
+            user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
+            command = user_input.split()
+            return load_or_create_project(collection, command)
+        else :
+            return command[1]
     elif command[0] == "create":
-        return add_project(collection, command[1])
+        data = add_project(collection, command[1])
+        return command[1]
     else: 
-        return load_or_create_project(collection)
+        user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
+        command = user_input.split()
+        return load_or_create_project(collection, command)
 
 
 
 ##################  Main Execution Section  ##################
 
 collection = login_user()
-project = load_or_create_project(collection)
+
+user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
+command = user_input.split()
+project = load_or_create_project(collection, command)
 
 print("Enter a command, \nUse \"help\" for information")
 
@@ -123,25 +136,30 @@ while command[0] != "exit":
             if len(command) <= 2:
                 print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
             else:
-                create_attribute(collection, project, command[1], command[2], command[3])
+                add_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "rmattr":
             if len(command) <= 2:
                 print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
             else: 
-                delete_attribute(collection, project, command[1], command[2], command[3])
+                delete_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "save":
-            print("save is not yet implemented")
+            print("Project is saved")
         case "load":
-            get_project(command[1], project)
+            project = get_project(collection, command[1])
         case "lscls":
-            print("lscls is not yet implemented")
+            data = list_classes(collection, project)
+            for objects in data:
+                print("\t\t" + str(objects))
         case "clsinfo":
             if len(command) <= 1:
                 print("Must provide a valid class to display\n\tplease use command: \"help\" for proper use.")
             else:
-                print("clsinfo is not yet implemented")
+                data = get_class(collection, project, command[1]) 
+                print(data)
         case "lsrel":
-            print("lsrel is not yet implemented")
+            data = list_relationships(collection, project)
+            for objects in data:
+                print("\t\t" + str(objects))
         case "help":
             print(options)
         case " ":
