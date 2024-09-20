@@ -59,8 +59,12 @@ def login_user():
     else :
         return login_user()
 
-def load_or_create_project(collection, command):
+def load_or_create_project(collection):
     # Make sure to add checks to other parts too.
+    user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
+    command = user_input.split()
+    if command == None:
+        return load_or_create_project(collection)
     if len(command) > 2:
         print("Too many arguments, \n\tHint names can't have spaces")
         return load_or_create_project(collection)
@@ -71,20 +75,16 @@ def load_or_create_project(collection, command):
         data = get_project(collection, command[1])
         if data == None:
             print("Project does not exist")
-            user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
-            command = user_input.split()
-            return load_or_create_project(collection, command)
+            return load_or_create_project(collection)
         else :
             return command[1]
     elif command[0] == "create":
         data = add_project(collection, command[1])
         return command[1]
     else: 
-        user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
-        command = user_input.split()
-        return load_or_create_project(collection, command)
+        return load_or_create_project(collection)
 
-def display_class(string_data) :
+def list_object(string_data) :
     split_on_attributes = string_data.split("{") # Checks if the class has attributes
     if len(split_on_attributes) == 2: # If it does not do this section
         chuncks = string_data.split(",") # Splits the object into its peices
@@ -131,9 +131,7 @@ def display_class(string_data) :
 
 collection = login_user()
 
-user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
-command = user_input.split()
-project = load_or_create_project(collection, command)
+project = load_or_create_project(collection)
 
 print("Enter a command, \nUse \"help\" for information")
 
@@ -185,12 +183,15 @@ while command[0] != "exit":
         case "save":
             print("Project is saved")
         case "load":
-            project = get_project(collection, command[1])
+            if get_project(collection, command[1]) is None:
+                print("Project does not exist\n\tContinuing with project " + project)
+            else :
+                project = command[1]
         case "lscls":
             data = list_classes(collection, project)
             for objects in data:
                 string_data = str(objects)
-                display_class(string_data)
+                list_object(string_data)
                 
         case "clsinfo":
             if len(command) <= 1:
@@ -198,15 +199,16 @@ while command[0] != "exit":
             else:
                 data = list_classes(collection, project)
                 string_data = str(data)
-                display_class(string_data)
+                list_object(string_data)
         case "lsrel":
             data = list_relationships(collection, project)
             for objects in data:
-                print("\t\t" + str(objects))
+                string_data = str(objects)
+                list_object(string_data)
         case "help":
             print(options)
         case " ":
-            print("Please provide a command")
+            print("Please provide a command\n\tUse \"help\" for a list of valid commands")
         case _: # Default case if others did not match
             print(command[0] + " is not a command\n\tUse \"help\" for a list of valid commands")
 
