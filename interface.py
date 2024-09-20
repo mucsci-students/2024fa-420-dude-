@@ -79,7 +79,6 @@ def load_or_create_project(collection):
 ##################  Main Execution Section  ##################
 
 collection = login_user()
-# Load or Create Project
 project = load_or_create_project(collection)
 
 print("Enter a command, \nUse \"help\" for information")
