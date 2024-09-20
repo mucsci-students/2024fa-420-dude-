@@ -84,6 +84,47 @@ def load_or_create_project(collection, command):
         command = user_input.split()
         return load_or_create_project(collection, command)
 
+def display_class(string_data) :
+    split_on_attributes = string_data.split("{") # Checks if the class has attributes
+    if len(split_on_attributes) == 2: # If it does not do this section
+        chuncks = string_data.split(",") # Splits the object into its peices
+        # Prints each peice of the object on its own line
+        for i in range(len(chuncks)) :
+            # Removes the "}" from the end so it can be printed on its on line
+            if i == len(chuncks) - 1: 
+                remaining_string = chuncks[i]
+                print(remaining_string[:-1])
+                print("}")
+            elif i == 0:
+                # Removes the "{" from the beggining so that it can be printed on its own line
+                beggining_string = chuncks[i] 
+                print("{")
+                print(beggining_string[1:])
+            else :
+                print(chuncks[i] + ",") # Prints each section with a comma at the end.
+    else : # If there are attributes do this section
+        # Prints everything before the attributes
+        paird_beggining_chunks = split_on_attributes[1].split(",")
+        print("{") 
+        amount_of_chuncks = len(paird_beggining_chunks)
+        for i in range(amount_of_chuncks):
+            if i == amount_of_chuncks - 1:
+                print(paird_beggining_chunks[i])
+            else :
+                print(paird_beggining_chunks[i] + ",")
+
+        # Prints everything after the attributes
+        paired_end_chunks = split_on_attributes[2].split(",")
+        print("    {")
+        amount_of_chuncks = len(paired_end_chunks)
+        for i in range(amount_of_chuncks):
+            if i != amount_of_chuncks -1:
+                print("\t" + paired_end_chunks[i] + ",")
+            else:
+                print("\t" + paired_end_chunks[i]) # Prints the last attribute
+                print("    }")
+                print("  ]\n}")
+
 
 
 ##################  Main Execution Section  ##################
@@ -148,13 +189,16 @@ while command[0] != "exit":
         case "lscls":
             data = list_classes(collection, project)
             for objects in data:
-                print("\t\t" + str(objects))
+                string_data = str(objects)
+                display_class(string_data)
+                
         case "clsinfo":
             if len(command) <= 1:
                 print("Must provide a valid class to display\n\tplease use command: \"help\" for proper use.")
             else:
-                data = get_class(collection, project, command[1]) 
-                print(data)
+                data = list_classes(collection, project)
+                string_data = str(data)
+                display_class(string_data)
         case "lsrel":
             data = list_relationships(collection, project)
             for objects in data:
