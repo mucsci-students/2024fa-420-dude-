@@ -105,14 +105,14 @@ def list_object(string_data) :
                 print(chuncks[i] + ",") # Prints each section with a comma at the end.
     else : # If there are attributes do this section
         # Prints everything before the attributes
-        paird_beggining_chunks = split_on_attributes[1].split(",")
+        paired_beggining_chunks = split_on_attributes[1].split(",")
         print("{") 
-        amount_of_chuncks = len(paird_beggining_chunks)
+        amount_of_chuncks = len(paired_beggining_chunks)
         for i in range(amount_of_chuncks):
             if i == amount_of_chuncks - 1:
-                print(paird_beggining_chunks[i])
+                print(paired_beggining_chunks[i])
             else :
-                print(paird_beggining_chunks[i] + ",")
+                print(paired_beggining_chunks[i] + ",")
 
         # Prints everything after the attributes
         paired_end_chunks = split_on_attributes[2].split(",")
@@ -126,7 +126,16 @@ def list_object(string_data) :
                 print("    }")
                 print("  ]\n}")
 
-
+def wrong_amount_of_inputs_warning(command, number_required) -> bool:
+    argument_not_met = False
+    if len(command) < number_required :
+        print("Incorrect number of arguments.\n\tUse \"help\" for information")
+        argument_not_met = True
+    elif len(command) > number_required :
+        print("Too many arguments.\n\tTip: Names must be one word.")
+        argument_not_met = True
+    else:
+        return argument_not_met
 
 ##################  Main Execution Section  ##################
 
@@ -147,64 +156,45 @@ if len(command) == 0:
 while command[0] != "exit":
     match command[0]:
         case "mkcls":
-            if len(command) <= 1:
-                print("Must provide a valid name\n\tplease use command: \"help\" for proper use.")
-            else: 
+            if wrong_amount_of_inputs_warning(command, 2) is False:
                 add_class(collection, project, command[1]) 
         case "rmcls":
-            if len(command) <= 1:
-                print("Must provide a valid class name \n\tplease use command: \"help\" for proper use.")
-            else:
+            if wrong_amount_of_inputs_warning(command, 2) is False:
                 delete_class(collection, project, command[1])
         case "chngcls":
-            if len(command) <= 2:
-                print("Must provide a new name and valid class \n\tplease use command: \"help\" for proper use.")
-            else: 
+            if wrong_amount_of_inputs_warning(command, 3) is False:
                 rename_class(collection, project, command[1], command[2])
         case "mkrel":
-            if len(command) <= 2:
-                print("Must provide two classes \n\tplease use command: \"help\" for proper use.")
-            else:
+            if wrong_amount_of_inputs_warning(command, 4) is False:
                 add_relationship(collection, project, command[1], command[2], command[3])
         case "rmrel":
-            if len(command) <= 2:
-                print("Must provide two classes \n\tplease use command: \"help\" for proper use.")
-            else: 
+            if wrong_amount_of_inputs_warning(command, 4) is False:
                 delete_relationship(collection, project, command[1], command[2], command[3])
         case "mkattr":
-            if len(command) <= 2:
-                print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
-            else:
+            if wrong_amount_of_inputs_warning(command, 5) is False:
                 add_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "rmattr":
-            if len(command) <= 2:
-                print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
-            else: 
+            if wrong_amount_of_inputs_warning(command, 5) is False:
                 delete_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "chngattr":
-            if len(command) <= 2:
-                print("Must provide a Class, Attribute, and New Name\n\tplease use command: \"help\" for proper use")
-            elif len(command) > 4:
-                print("Too many arguments\n\tHint: names can not have spaces.")
-            else :
+            if wrong_amount_of_inputs_warning(command, 4) is False:
                 rename_attribute(collection, project, command[1], command[2], command[3])
         case "save":
             print("Project is saved")
         case "load":
-            if get_project(collection, command[1]) is None:
-                print("Project does not exist\n\tContinuing with project " + project)
-            else :
-                project = command[1]
+            if wrong_amount_of_inputs_warning(command, 2) is False:
+                if get_project(collection, command[1]) is None:
+                    print("Project does not exist\n\tContinuing with project " + project)
+                else :
+                    project = command[1]
         case "lscls":
             data = list_classes(collection, project)
             for objects in data:
                 string_data = str(objects)
                 list_object(string_data)
         case "clsinfo":
-            if len(command) <= 1:
-                print("Must provide a valid class to display\n\tplease use command: \"help\" for proper use.")
-            else:
-                data = list_classes(collection, project)
+            if wrong_amount_of_inputs_warning(command, 2) is False:
+                data = get_class(collection, project, command[1])
                 string_data = str(data)
                 list_object(string_data)
         case "lsrel":
