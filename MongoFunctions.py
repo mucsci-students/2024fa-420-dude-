@@ -5,20 +5,44 @@ import string
 
 # Function to connect the user to their designated collection
 def connect():
-    print("Username: ")
-    username = input()
-    print("Password: ")
-    password = input()
+    # Get the username and password from the user
+    username = input("Username: ")
+    password = input("Password: ")
+
+    # Attempt to get their respective collection from the database
     uri = "mongodb+srv://derrickboyer3:bigbangtheorY@atlascluster.n5ktxxk.mongodb.net/"
     client = pymongo.MongoClient(uri)
     db = client.get_database("UML_Collections")
     collection = db.get_collection(username)
-    data = collection.find({ "username": username }, { "password": password })
-    for item in data:
-        if item is None:
-            return None
-        else:
-            return collection
+    data = collection.find_one({ "username": username }, { "password": password })
+
+    # If the user does not exist, return None, otherwise return the collection
+    if data is None:
+        return None
+    else:
+        return collection
+        
+# Function to create a new user collection
+def create_collection():
+    # Get the new username and password from the user
+    username = input("Username: ")
+    password = input("Password: ")
+
+    # Connect to the database and get the user's collection if it already exists
+    # If it does, return None, otherwise create the collection and return it
+    uri = "mongodb+srv://derrickboyer3:bigbangtheorY@atlascluster.n5ktxxk.mongodb.net/"
+    client = pymongo.MongoClient(uri)
+    db = client.get_database("UML_Collections")
+    collection = db.get_collection(username)
+    data = collection.find_one({ "username": username, "password": password })
+    if data is not None:
+        print("Username already exists.")
+        return None
+    db.create_collection(username)
+    collection = db.get_collection(username)
+    collection.insert_one({ "username": username, "password": password })
+    return collection
+
         
 
 
@@ -60,6 +84,11 @@ def rename_class(collection, project_name, class_name, new_name):
 def delete_class(collection, project_name, class_name):
     collection.delete_one({ "object type": "class", "project": project_name, "name": class_name })
 
+# Function to list all classes in a project
+def list_classes(collection, project_name):
+    data = collection.find({ "object type": "class", "project": project_name })
+    return data
+
 
 
 
@@ -78,6 +107,11 @@ def get_relationship(collection, project_name, relationship_type, class1_name, c
 def delete_relationship(collection, project_name, relationship_type, class1_name, class2_name):
     collection.delete_one({ "object type": "relationship", "project": project_name, "relationship type": relationship_type, "class1": class1_name, "class2": class2_name })
 
+# Function to list all relationships in a project
+def list_relationships(collection, project_name):
+    data = collection.find({ "object type": "relationship", "project": project_name })
+    return data
+
 
 
 
@@ -87,6 +121,11 @@ def delete_relationship(collection, project_name, relationship_type, class1_name
 # Function to create a new attribute object
 def create_attribute(collection, project_name, class_name, attribute_data):
     collection.find_one_and_update({ "object type": "class", "project": project_name, "name": class_name }, { "$push": { "attributes": attribute_data } })
+
+# Function to get an attribute object
+def get_attribute(collection, project_name, class_name, attribute_name):
+    data = collection.find_one({ "object type": "class", "project": project_name, "name": class_name, "attributes.name": attribute_name }, { "attributes.$": 1 })
+    return data
 
 # Function to rename an attribute object
 def rename_attribute(collection, project_name, class_name, attribute_name, new_name):
