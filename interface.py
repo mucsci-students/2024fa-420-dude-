@@ -10,21 +10,23 @@ from Utility_Functions import *
 # Command options printed if user inputs "help"
 options = '''Commmands:
     mkcls [Name] : 
-        - Creat a new class with [Name]
+        - Create a new class with [Name]
     rmcls [Class] : 
         - Deletes [Class] 
     chngcls [Class] [New Name] :
         - Rename [Class] with [New Name] 
     mkrel [Type] [Class 1] [Class 2] : 
-        - Creat a new relationship between [Class 1] and [Class 2]
+        - Create a new relationship between [Class 1] and [Class 2]
         - Type must be of Aggregation or Composition
     rmrel [Type] [Class 1] [Class 2] : 
         - Delete a relationship between [Class 1] and [Class 2]
         - Type must be of Aggregation or Composition
     mkattr [Class] [Name] [Type] [Value] : 
-        - Creat an attribute for [Class] with [Name]
+        - Create an attribute for [Class] with [Name]
     rmattr [Class] [Name] [Type] [Value] : 
         - Delete an attribute with [Name] from [Class]
+    chngattr [Class] [Attribute] [New Name] :
+        - Rename the [Attribute] from [Class] with [New Name]
     save : 
         - Save the current project 
     load [Name] :
@@ -60,7 +62,6 @@ def login_user():
         return login_user()
 
 def load_or_create_project(collection):
-    # Make sure to add checks to other parts too.
     user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
     command = user_input.split()
     if command == None:
@@ -180,6 +181,13 @@ while command[0] != "exit":
                 print("Must provide a name and class\n\tplease use command: \"help\" for proper use.")
             else: 
                 delete_attribute(collection, project, command[1], command[2], command[3], command[4])
+        case "chngattr":
+            if len(command) <= 2:
+                print("Must provide a Class, Attribute, and New Name\n\tplease use command: \"help\" for proper use")
+            elif len(command) > 4:
+                print("Too many arguments\n\tHint: names can not have spaces.")
+            else :
+                rename_attribute(collection, project, command[1], command[2], command[3])
         case "save":
             print("Project is saved")
         case "load":
@@ -192,7 +200,6 @@ while command[0] != "exit":
             for objects in data:
                 string_data = str(objects)
                 list_object(string_data)
-                
         case "clsinfo":
             if len(command) <= 1:
                 print("Must provide a valid class to display\n\tplease use command: \"help\" for proper use.")
