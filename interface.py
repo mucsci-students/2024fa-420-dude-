@@ -191,12 +191,14 @@ while command[0] != "exit":
             data = list_classes(collection, project)
             for objects in data:
                 string_data = str(objects)
-                list_object(string_data)
+                print(string_data)
+                # list_object(string_data)
         case "clsinfo":
             if wrong_amount_of_inputs_warning(command, 2) is False:
                 data = get_class(collection, project, command[1])
                 string_data = str(data)
-                list_object(string_data)
+                print(string_data)
+                # list_object(string_data)
         case "lsrel":
             data = list_relationships(collection, project)
             for objects in data:
