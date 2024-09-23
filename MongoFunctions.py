@@ -61,6 +61,10 @@ def get_project(collection, project_name):
 # Function to delete a project object
 def delete_project(collection, project_name):
     collection.delete_one({ "object type": "project", "name": project_name }) # deletes the project from the collection
+    # Delete all classes in the project
+    collection.delete_many({ "object type": "class", "project": project_name })
+    # Delete all relationships in the project
+    collection.delete_many({ "object type": "relationship", "project": project_name })
 
 
 
