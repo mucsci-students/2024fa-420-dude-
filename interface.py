@@ -1,7 +1,7 @@
 # This is the file that will be used for programming the interface.
 #maybe use argpars
 
-import pymongo
+# import pymongo
 from MongoFunctions import * 
 from Utility_Functions import *
 
@@ -25,8 +25,8 @@ options = '''Commmands:
         - Create an attribute for [Class] with [Name]
     rmattr [Class] [Name] [Type] [Value] : 
         - Delete an attribute with [Name] from [Class]
-    chngattr [Class] [Attribute] [New Name] :
-        - Rename the [Attribute] from [Class] with [New Name]
+    chngattr [Class] [Attribute Name] [New Attribute Name] :
+        - Rename the attribute with [Attribute Name] from [Class] with [New Attribute Name]
     save : 
         - Save the current project 
     load [Name] :
@@ -91,7 +91,7 @@ def list_object(string_data) :
         chuncks = string_data.split(",") # Splits the object into its peices
         # Prints each peice of the object on its own line
         for i in range(len(chuncks)) :
-            # Removes the "}" from the end so it can be printed on its on line
+        # Removes the "}" from the end so it can be printed on its on line
             if i == len(chuncks) - 1: 
                 remaining_string = chuncks[i]
                 print(remaining_string[:-1])
@@ -115,17 +115,22 @@ def list_object(string_data) :
                 print(paired_beggining_chunks[i] + ",")
 
         # Prints everything after the attributes
-        paired_end_chunks = split_on_attributes[2].split(",")
-        print("    {")
-        amount_of_chuncks = len(paired_end_chunks)
-        for i in range(amount_of_chuncks):
-            if i != amount_of_chuncks -1:
-                print("\t" + paired_end_chunks[i] + ",")
-            else:
-                print("\t" + paired_end_chunks[i]) # Prints the last attribute
-                print("    }")
-                print("  ]\n}")
+        for i in range(len(split_on_attributes) - 2):
 
+            paired_end_chunks = split_on_attributes[i + 2].split(",")
+            print("    {")
+            amount_of_chuncks = len(paired_end_chunks)
+            for i in range(amount_of_chuncks):
+                if i != amount_of_chuncks -1:
+                    print("\t" + paired_end_chunks[i] + ",")
+                    if i is len(split_on_attributes) - 1:
+                        string_of_last_chunk = paired_end_chunks[i]
+                        print("\t" + string_of_last_chunk[:-3])
+                else:
+                    print("\t" + paired_end_chunks[i]) # Prints the last attribute
+                    print("    }")
+        print("  ]\n}")
+    
 def wrong_amount_of_inputs_warning(command, number_required) -> bool:
     argument_not_met = False
     if len(command) < number_required :
@@ -191,11 +196,13 @@ while command[0] != "exit":
             data = list_classes(collection, project)
             for objects in data:
                 string_data = str(objects)
+                # print(string_data)
                 list_object(string_data)
         case "clsinfo":
             if wrong_amount_of_inputs_warning(command, 2) is False:
                 data = get_class(collection, project, command[1])
                 string_data = str(data)
+                # print(string_data)
                 list_object(string_data)
         case "lsrel":
             data = list_relationships(collection, project)
