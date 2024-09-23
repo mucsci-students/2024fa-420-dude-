@@ -1,7 +1,7 @@
 # This is the file that will be used for programming the interface.
 #maybe use argpars
 
-import pymongo
+# import pymongo
 from MongoFunctions import * 
 from Utility_Functions import *
 
@@ -116,12 +116,16 @@ def list_object(string_data) :
 
         # Prints everything after the attributes
         for i in range(len(split_on_attributes) - 2):
+
             paired_end_chunks = split_on_attributes[i + 2].split(",")
             print("    {")
             amount_of_chuncks = len(paired_end_chunks)
             for i in range(amount_of_chuncks):
                 if i != amount_of_chuncks -1:
                     print("\t" + paired_end_chunks[i] + ",")
+                    if i is len(split_on_attributes) - 1:
+                        string_of_last_chunk = paired_end_chunks[i]
+                        print("\t" + string_of_last_chunk[:-3])
                 else:
                     print("\t" + paired_end_chunks[i]) # Prints the last attribute
                     print("    }")
