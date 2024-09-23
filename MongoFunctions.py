@@ -79,6 +79,11 @@ def get_class(collection, project_name, class_name):
 #Function to rename a class object
 def rename_class(collection, project_name, class_name, new_name):
     collection.update_one({ "object type": "class", "project": project_name, "name": class_name }, { "$set": { "name": new_name } }) # updates the class name in the collection
+    # Update query for relationships
+    # Update query for class1
+    collection.update_many({ "object type": "relationship", "project": project_name, "class1": class_name }, { "$set": { "class1": new_name } })
+    # Update query for class2
+    collection.update_many({ "object type": "relationship", "project": project_name, "class2": class_name }, { "$set": { "class2": new_name } })
 
 # Function to delete a class object
 def delete_class(collection, project_name, class_name):
