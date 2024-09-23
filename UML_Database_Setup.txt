@@ -1,0 +1,56 @@
+UML Database Setup:
+	-Users have their own collections within the UML Database on MongoDB
+	-Each collection is made up of the following JSON objects:
+		1.) Project Objects
+			-Project Objects are for loading and saving specific data based on the project it belongs to. Each project has it's own specific classes, relationships, and attributes. Project objects are mainly used for the Save/Load function of the program
+			-EX:
+				{
+					"object type": "project",
+					"name": "Test Project"
+				}
+
+		2.) Class Objects
+			-Class Objects are for storing class information. This stores the project the class belongs to, the name of the class, and the attributes of the class
+			-EX:
+				{
+					"object type": "class",
+					"project": "Test Project",
+					"name": "Test Class",
+					"attributes": [{ "object type": "attribute", "name": "Test Attribute", "value": "Test Value" }]
+				}
+
+		3.) Relationship Objects
+			-Relationship Objects are for storing the relationships between classes.
+			-EX:
+				{
+					"object type": "relationship",
+					"project": "Test Project",
+					"relationship type": "one-to-one",
+					"class1": "Test Class 1",
+					"class2": "Test Class 2"
+				}
+
+		4.) Attribute Objects
+			-Attribute Objects are used to store the attribute data for a class. These are not objects that will be by themselves, rather and object that will be stored in an array of a specified class.
+			-EX:
+				{
+					"object type": "attribute",
+					"name": "Test Attribute",
+					"type": "string"
+					"value": "Test Value"
+				}
+		5.) 1 Authorization Object
+			-Authorization objects are used to make sure that there is a valid collection for the username/password combination given at the start of the program. Each collection will store one of these objects specifically for this one purpose.
+			-EX:
+				{
+					"username": "Test Username",
+					"password": "Test Password"
+				}
+
+
+
+
+
+
+
+
