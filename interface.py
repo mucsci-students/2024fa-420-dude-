@@ -25,8 +25,8 @@ options = '''Commmands:
         - Create an attribute for [Class] with [Name]
     rmattr [Class] [Name] [Type] [Value] : 
         - Delete an attribute with [Name] from [Class]
-    chngattr [Class] [Attribute] [New Name] :
-        - Rename the [Attribute] from [Class] with [New Name]
+    chngattr [Class] [Attribute Name] [New Attribute Name] :
+        - Rename the attribute with [Attribute Name] from [Class] with [New Attribute Name]
     save : 
         - Save the current project 
     load [Name] :
