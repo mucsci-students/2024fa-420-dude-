@@ -1,6 +1,7 @@
 import tinydb
 import json
 
+# Global for the JSON file format required by the backend functions
 json_format = '''Please make sure data is formatted like so:
                 {
                     "classes": [
@@ -146,7 +147,7 @@ def json_get_parameters(data, class_name, method_name):
 
 
 
-############### WRITE FUNCTIONS ###############
+############### ADD FUNCTIONS ###############
 
 # Function to write to a JSON file
 def json_write_file(file_path, data):
@@ -275,6 +276,8 @@ def json_add_parameter(data, class_name, method_name, new_parameter_data):
             c = class_data
     data["classes"] = all_classes
     return data
+
+############### UPDATE FUNCTIONS ###############
 
 # Function to rename a class in the JSON file
 def json_rename_class(data, old_class_name, new_class_name):
@@ -412,6 +415,8 @@ def json_rename_parameter(data, class_name, method_name, old_parameter_name, new
             c = class_data
     data["classes"] = all_classes
     return data
+
+############### DELETE FUNCTIONS ###############
 
 # Function to remove a class from the JSON file
 def json_delete_class(data, class_name):
