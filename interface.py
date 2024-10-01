@@ -3,6 +3,8 @@
 
 #pyunit for testing
 
+from DBFunctions import *
+
 # Command options printed if user inputs "help"
 options = '''Commmands:
     mkcls [Name] : 
@@ -39,7 +41,7 @@ options = '''Commmands:
         - Exits the interface'''
 
 #####################   Functions  ######################
-   
+
 def wrong_amount_of_inputs_warning(command, number_required) -> bool:
     argument_not_met = False
     if len(command) < number_required :
@@ -54,6 +56,11 @@ def wrong_amount_of_inputs_warning(command, number_required) -> bool:
 ##################  Main Execution Section  ##################
 
 
+file_path = input("What project would you like to work on (note this is a file path for now): ")
+while file_path == "":
+    file_path = input("You must provide a project name (note this is a file path for now): ")
+# I must include a check if the file_path is valid.
+data = json_read_file(file_path)
 print("Enter a command, \nUse \"help\" for information")
 
 # Prompts the user for input
@@ -109,12 +116,15 @@ while command[0] != "exit":
                     print("Not implemented")
                     # project = command[1]
         case "lscls":
-                print("Not implemented")
+            classes = json_get_classes(data) 
+            print(classes)
         case "clsinfo":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                print("Not implemented")
+                class_info = json_get_class(data, command[1])
+                print(class_info)
         case "lsrel":
-            print("Not implemented")
+            relationship = json_get_relationships(data)
+            print(relationship)
         case "help":
             print(options)
         case " ":
