@@ -1,11 +1,7 @@
 # This is the file that will be used for programming the interface.
 #maybe use argpars
 
-# import pymongo
-from MongoFunctions import * 
-from Utility_Functions import *
-
-#pyunit
+#pyunit for testing
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -43,95 +39,7 @@ options = '''Commmands:
         - Exits the interface'''
 
 #####################   Functions  ######################
-
-def login_user():
-    print("Use \"1\" to sign in or \"2\" to create an account.")
-    user_input = input("DUML: ")
-    if user_input == "1":
-        collection = MongoFunctions.connect()
-        if collection is None:
-            print("Invalid login credentials")
-            return login_user()
-        return collection
-    elif user_input == "2":
-        collection = MongoFunctions.create_collection()
-        if  collection is None:
-            print("That username already exist")
-            return collection
-        return collection  
-    else :
-        return login_user()
-
-def load_or_create_project(collection):
-    user_input = input("Type load [Project] to open a project or create [Project] to make a new one: ")
-    command = user_input.split()
-    if command == None:
-        return load_or_create_project(collection)
-    if len(command) > 2:
-        print("Too many arguments, \n\tHint names can't have spaces")
-        return load_or_create_project(collection)
-    if len(command) < 2:
-        print("You must provide a name for the project you wish to load or creat.")
-        return load_or_create_project(collection)
-    if command[0] == "load":
-        data = get_project(collection, command[1])
-        if data == None:
-            print("Project does not exist")
-            return load_or_create_project(collection)
-        else :
-            return command[1]
-    elif command[0] == "create":
-        data = add_project(collection, command[1])
-        return command[1]
-    else: 
-        return load_or_create_project(collection)
-
-def list_object(string_data) :
-    split_on_attributes = string_data.split("{") # Checks if the class has attributes
-    if len(split_on_attributes) == 2: # If it does not do this section
-        chuncks = string_data.split(",") # Splits the object into its peices
-        # Prints each peice of the object on its own line
-        for i in range(len(chuncks)) :
-        # Removes the "}" from the end so it can be printed on its on line
-            if i == len(chuncks) - 1: 
-                remaining_string = chuncks[i]
-                print(remaining_string[:-1])
-                print("}")
-            elif i == 0:
-                # Removes the "{" from the beggining so that it can be printed on its own line
-                beggining_string = chuncks[i] 
-                print("{")
-                print(beggining_string[1:])
-            else :
-                print(chuncks[i] + ",") # Prints each section with a comma at the end.
-    else : # If there are attributes do this section
-        # Prints everything before the attributes
-        paired_beggining_chunks = split_on_attributes[1].split(",")
-        print("{") 
-        amount_of_chuncks = len(paired_beggining_chunks)
-        for i in range(amount_of_chuncks):
-            if i == amount_of_chuncks - 1:
-                print(paired_beggining_chunks[i])
-            else :
-                print(paired_beggining_chunks[i] + ",")
-
-        # Prints everything after the attributes
-        for i in range(len(split_on_attributes) - 2):
-
-            paired_end_chunks = split_on_attributes[i + 2].split(",")
-            print("    {")
-            amount_of_chuncks = len(paired_end_chunks)
-            for i in range(amount_of_chuncks):
-                if i != amount_of_chuncks -1:
-                    print("\t" + paired_end_chunks[i] + ",")
-                    if i is len(split_on_attributes) - 1:
-                        string_of_last_chunk = paired_end_chunks[i]
-                        print("\t" + string_of_last_chunk[:-3])
-                else:
-                    print("\t" + paired_end_chunks[i]) # Prints the last attribute
-                    print("    }")
-        print("  ]\n}")
-    
+   
 def wrong_amount_of_inputs_warning(command, number_required) -> bool:
     argument_not_met = False
     if len(command) < number_required :
@@ -145,9 +53,6 @@ def wrong_amount_of_inputs_warning(command, number_required) -> bool:
 
 ##################  Main Execution Section  ##################
 
-collection = login_user()
-
-project = load_or_create_project(collection)
 
 print("Enter a command, \nUse \"help\" for information")
 
@@ -163,53 +68,53 @@ while command[0] != "exit":
     match command[0]:
         case "mkcls":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                add_class(collection, project, command[1]) 
+                # add_class(collection, project, command[1]) 
+                print("Not implemented")
         case "rmcls":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                delete_class(collection, project, command[1])
+                #delete_class(collection, project, command[1])
+                print("Not implemented")
         case "chngcls":
             if wrong_amount_of_inputs_warning(command, 3) is False:
-                rename_class(collection, project, command[1], command[2])
+                # rename_class(collection, project, command[1], command[2])
+                print("Not implemented")
         case "mkrel":
             if wrong_amount_of_inputs_warning(command, 4) is False:
-                add_relationship(collection, project, command[1], command[2], command[3])
+                print("Not implemented")
+                #add_relationship(collection, project, command[1], command[2], command[3])
         case "rmrel":
             if wrong_amount_of_inputs_warning(command, 4) is False:
-                delete_relationship(collection, project, command[1], command[2], command[3])
+                print("Not implemented")
+                #delete_relationship(collection, project, command[1], command[2], command[3])
         case "mkattr":
             if wrong_amount_of_inputs_warning(command, 5) is False:
-                add_attribute(collection, project, command[1], command[2], command[3], command[4])
+                print("Not implemented")
+                #add_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "rmattr":
             if wrong_amount_of_inputs_warning(command, 5) is False:
-                delete_attribute(collection, project, command[1], command[2], command[3], command[4])
+                print("Not implemented")
+                # delete_attribute(collection, project, command[1], command[2], command[3], command[4])
         case "chngattr":
             if wrong_amount_of_inputs_warning(command, 4) is False:
-                rename_attribute(collection, project, command[1], command[2], command[3])
+                print("Not implemented")
+                #rename_attribute(collection, project, command[1], command[2], command[3])
         case "save":
-            print("Project is saved")
+            print("Not implemented")
         case "load":
             if wrong_amount_of_inputs_warning(command, 2) is False:
                 if get_project(collection, command[1]) is None:
-                    print("Project does not exist\n\tContinuing with project " + project)
+                    # print("Project does not exist\n\tContinuing with project " + project)
+                    print("Not implemented")
                 else :
-                    project = command[1]
+                    print("Not implemented")
+                    # project = command[1]
         case "lscls":
-            data = list_classes(collection, project)
-            for objects in data:
-                string_data = str(objects)
-                print(string_data)
-                # list_object(string_data)
+                print("Not implemented")
         case "clsinfo":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                data = get_class(collection, project, command[1])
-                string_data = str(data)
-                print(string_data)
-                # list_object(string_data)
+                print("Not implemented")
         case "lsrel":
-            data = list_relationships(collection, project)
-            for objects in data:
-                string_data = str(objects)
-                list_object(string_data)
+            print("Not implemented")
         case "help":
             print(options)
         case " ":
