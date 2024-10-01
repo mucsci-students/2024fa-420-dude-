@@ -111,6 +111,19 @@ def json_get_fields(data, class_name):
         return None
     return fields
 
+# Function to get a specific field of a class
+def json_get_field(data, class_name, field_name):
+    fields = json_get_fields(data, class_name)
+    if fields is None:
+        print("Error getting field data.")
+        print(json_format)
+        return None
+    for f in fields:
+        if f["name"] == field_name:
+            return f
+    print("Field not found. Field may not exist.")
+    return None
+
 # Function to get the methods of a class
 def json_get_methods(data, class_name):
     class_data = json_get_class(data, class_name)
@@ -125,6 +138,19 @@ def json_get_methods(data, class_name):
         print(json_format)
         return None
     return methods
+
+# Function to get a specific method of a class
+def json_get_method(data, class_name, method_name):
+    methods = json_get_methods(data, class_name)
+    if methods is None:
+        print("Error getting method data.")
+        print(json_format)
+        return None
+    for m in methods:
+        if m["name"] == method_name:
+            return m
+    print("Method not found. Method may not exist.")
+    return None
 
 # Function to get the parameters of a method
 def json_get_parameters(data, class_name, method_name):
@@ -143,6 +169,19 @@ def json_get_parameters(data, class_name, method_name):
                 return None
             return parameters
     print("Method not found. Method may not exist.")
+    return None
+
+# Function to get a specific parameter of a method
+def json_get_parameter(data, class_name, method_name, parameter_name):
+    parameters = json_get_parameters(data, class_name, method_name)
+    if parameters is None:
+        print("Error getting parameter data.")
+        print(json_format)
+        return None
+    for p in parameters:
+        if p["name"] == parameter_name:
+            return p
+    print("Parameter not found. Parameter may not exist.")
     return None
 
 

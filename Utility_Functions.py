@@ -1,245 +1,233 @@
-import MongoFunctions
+import DBFunctions as dbf
 
 
-############### All add functions. ###############
+############### All add functions. ####################
 
-# This function adds a project to the database. If the project already exists, it will return the data for the preexisting project.
-def add_project(collection, name):
+# Function to add a class to the project data.
+def add_class(project_data, class_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is not None:
+        print("Class already exists.")
+        return project_data
 
-    # Check if the name is valid.
-    if len(name) < 1:
-        print("Please enter a valid name!")
-        return None
-    
-    # Check if the project already exists.
-    data = MongoFunctions.get_project(collection, name)
-
-    # If the project already exists, return the data for the preexisting project.
-    if data is not None: 
-        print("Project already exists. Returning data for preexisting project.")
-        return data
-
-    # Create the project object.
-    project_object = {
-        "object type": "project",
-        "name": name,
+    class_data = {
+        "name": class_name,
+        "fields": [],
+        "methods": []
     }
 
-    # Insert the project object into the collection.
-    MongoFunctions.create_project(collection, project_object)
+    return dbf.json_add_class(project_data, class_data)
 
-    # Get the project object from the collection.
-    data = MongoFunctions.get_project(collection, name)
-
-    # If the project object was successfully created, return the data for the project.
-    if data is not None: 
-        return data
-    else:
-        print("The was an error in making this project!")
-        return None
-
-
-# This function adds a class to the database. If the class already exists, it will return the data for the preexisting class.
-def add_class(collection, project, name):
+# Function to add a relationship to the project data.
+def add_relationship(project_data, source, dest, rel_type):
+    rel_data = dbf.json_get_relationship(project_data, source, dest)
+    if rel_data is not None:
+        print("Relationship already exists.")
+        return project_data
     
-    # Check if the name is valid.
-    if len(name) < 1:
-        print("Please enter a valid name!")
-        return None
+    source_data = dbf.json_get_class(project_data, source)
+    dest_data = dbf.json_get_class(project_data, dest)
+    if source_data is None or dest_data is None:
+        print("Source or destination class does not exist.")
+        return project_data
     
-    # Check if the project exists.
-    data = MongoFunctions.get_project(collection, project)
-    # If the project does not exist, return None.
-    if data is None:
-        print("Project does not exist!")
-        return None
+    if source == dest:
+        print("Source and destination class cannot be the same.")
+        return project_data
     
-    # Check if the class already exists.
-    data = MongoFunctions.get_class(collection, project, name)
-    # If the class already exists, return the data for the preexisting class.
-    if data is not None: 
-        print("Class already exists. Returning data for preexisting class.")
-        return data
+    if rel_type != "Aggregation" and rel_type != "Composition" and rel_type != "Inheritance" and rel_type != "Realization":
+        print("Invalid relationship type.")
+        return project_data
 
-    # Create the class object.
-    class_object = {
-        "object type": "class",
-        "project": project,
-        "name": name,
-        "attributes": [],
+    rel_data = {
+        "source": source,
+        "destination": dest,
+        "type": rel_type
     }
 
-    # Insert the class object into the collection.
-    MongoFunctions.create_class(collection, class_object)
+    return dbf.json_add_relationship(project_data, rel_data)
 
-    # Get the class object from the collection.
-    data = MongoFunctions.get_class(collection, project, name)
-
-    # If the class object was successfully created, return the data for the class.
-    if data is not None: 
-        return data
-    else:
-        print("The was an error in making this class!")
-        return None
-
-
-# This function adds a relationship to the database. If the relationship already exists, it will return the data for the preexisting relationship.
-def add_relationship(collection, project, type, class1_name, class2_name):
+# Function to add a field to a class in the project data.
+def add_field(project_data, class_name, field_name):
+    field_data = dbf.json_get_fields(project_data, class_name)
+    if field_data is None:
+        print("Class does not exist.")
+        return project_data
     
-    # Check if the relationship already exists.
-    data = MongoFunctions.get_relationship(collection, project, type, class1_name, class2_name)
-    # If the relationship already exists, return the data for the preexisting relationship.
-    if data is not None: return data
+    for field in field_data:
+        if field["name"] == field_name:
+            print("Field already exists.")
+            return project_data
 
-    # Check if the classes exist.
-    if (MongoFunctions.get_class(collection, project, class1_name) == None) or (MongoFunctions.get_class(collection, project, class2_name) == None):
-        print("One or more classes does not exist!")
-        return None
-
-    # Check if the relationship type is valid.
-    if (type != "Aggregation") and (type != "Composition"):
-        print("Type is not a valid relationship type!")
-        return None
-
-    # Create the relationship object.
-    relationship_object = {
-        "object type": "relationship",
-        "project": project,
-        "relationship type": type,
-        "class1": class1_name,
-        "class2": class2_name,
+    field_data = {
+        "name": field_name
     }
 
-    # Insert the relationship object into the collection.
-    MongoFunctions.create_relationship(collection, relationship_object)
+    return dbf.json_add_field(project_data, class_name, field_data)
 
-    # Get the relationship object from the collection.
-    data = MongoFunctions.get_relationship(collection, project, type, class1_name, class2_name)
-
-    # If the relationship object was successfully created, return the data for the relationship.
-    if data is not None: 
-        return data
-    else:
-        print("The was an error in making this relationship!")
-        return None 
+# Function to add a method to a class in the project data.
+def add_method(project_data, class_name, method_name, params):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
     
+    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    if method_data is not None:
+        print("Method already exists.")
+        return project_data
 
-# This function adds an attribute to the database. If the attribute already exists, it will return the data for the preexisting attribute.
-def add_attribute(collection, project, class_name, attribute_name, type, value):
-    
-    # Checks for a valid name.
-    if len(attribute_name) < 1:
-        print("Please enter a valid name!")
-        return None
-
-    # Checks if the class exists.
-    if MongoFunctions.get_class(collection, project, class_name) == None:
-        print("This class doesn't exist!")
-        return None
-
-    # Checks if the attribute already exists.
-    data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
-    # If the attribute already exists, return the data for the preexisting attribute.
-    if data is not None: return data
-
-    # Create the attribute object.
-    attribute_object = {
-        "object type": "attribute",
-        "name": attribute_name,
-        "type": type,
-        "value": value,
+    method_data = {
+        "name": method_name,
+        "params": params
     }
 
-    # Insert the attribute object into the collection.
-    MongoFunctions.create_attribute(collection, project, class_name, attribute_object)
+    return dbf.json_add_method(project_data, class_name, method_data)
 
-    # Get the attribute object from the collection.
-    data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
+# Function to add a parameter to a method in the project data.
+def add_param(project_data, class_name, method_name, param_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    if method_data is None:
+        print("Method does not exist.")
+        return project_data
+    param_data = dbf.json_get_parameters(project_data, class_name, method_name)
+    for param in param_data:
+        if param["name"] == param_name:
+            print("Parameter already exists.")
+            return project_data
 
-    # If the attribute object was successfully created, return the data for the attribute.
-    if data is not None: 
-        return data
-    else:
-        print("There was an error in making this attribute!")
-        return None 
+    param_data = {
+        "name": param_name
+    }
 
-
-
-
-
-############### All delete functions. ###############
-
-# This function deletes a project from the database.
-def delete_project(collection, project):
-    # Check if the project exists. If so, delete it.
-    data = MongoFunctions.get_project(collection, project)
-    if data is None:
-        print("There was an error deleting this project!")
-    else:
-        MongoFunctions.delete_project(collection, project)
+    return dbf.json_add_parameter(project_data, class_name, method_name, param_data)
 
 
-# This function deletes a class from the database.
-def delete_class(collection, project, name):
-    # Check if the class exists. If so, delete it.
-    data = MongoFunctions.get_class(collection, project, name)
-    if data is None:
-        print("There was an error deleting this class!")
-    else:
-        MongoFunctions.delete_class(collection, project, name)
+############### All delete functions. ####################
 
+# Function to delete a class from the project data.
+def delete_class(project_data, class_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
 
-# This function deletes a relationship from the database.
-def delete_relationship(collection, project, relationship_type, class_name1, class_name2):
-    # Check if the relationship exists. If so, delete it.
-    data = MongoFunctions.get_relationship(collection, project, relationship_type, class_name1, class_name2)
-    if data is None:
-        print("There was an error deleting this relationship!")
-    else:
-        MongoFunctions.delete_relationship(collection, project, relationship_type, class_name1, class_name2)
+    return dbf.json_delete_class(project_data, class_name)
 
+# Function to delete a relationship from the project data.
+def delete_relationship(project_data, source, dest):
+    class1_data = dbf.json_get_class(project_data, source)
+    class2_data = dbf.json_get_class(project_data, dest)
+    if class1_data is None or class2_data is None:
+        print("Source or destination class does not exist.")
+        return project_data
+    rel_data = dbf.json_get_relationship(project_data, source, dest)
+    if rel_data is None:
+        print("Relationship does not exist.")
+        return project_data
 
-# This function deletes an attribute from the database.
-def delete_attribute(collection, project, class_name, attribute_name, type, value):
-    # Check if the attribute exists. If so, delete it.
-    data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
-    if data is None:
-        print("There was an error deleting this class!")
-    else:
-        MongoFunctions.delete_attribute(collection, project, class_name, attribute_name)
+    return dbf.json_delete_relationship(project_data, source, dest)
 
+# Function to delete a field from a class in the project data.
+def delete_field(project_data, class_name, field_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    field_data = dbf.json_get_field(project_data, class_name, field_name)
+    if field_data is None:
+        print("Field does not exist.")
+        return project_data
 
+    return dbf.json_delete_field(project_data, class_name, field_name)
 
+# Function to delete a method from a class in the project data.
+def delete_method(project_data, class_name, method_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    if method_data is None:
+        print("Method does not exist.")
+        return project_data
 
+    return dbf.json_delete_method(project_data, class_name, method_name)
 
-############### All rename functions. ###############
+# Function to delete a parameter from a method in the project data.
+def delete_param(project_data, class_name, method_name, param_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    if method_data is None:
+        print("Method does not exist.")
+        return project_data
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, param_name)
+    if param_data is None:
+        print("Method does not exist or class does not exist.")
+        return project_data
+    print("Parameter does not exist.")
+    return project_data
 
-# This function renames a project in the database.
-def rename_class(collection, project, current_name, new_name):
-    # Check if the class exists. If so, rename it.
-    data = MongoFunctions.get_class(collection, project, current_name)
-    if data is None:
-        print("There was an error renaming this class!")
-    else:
-        # Check if the new name is valid.
-        if len(new_name) < 1:
-            print("Please enter a valid name!")
-            return None
-        MongoFunctions.rename_class(collection, project, current_name, new_name)
+############### All update functions. ####################
 
+# Function to rename a class in the project data.
+def update_class_name(project_data, old_name, new_name):
+    class_data = dbf.json_get_class(project_data, old_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
 
-# This function renames a relationship in the database.
-def rename_attribute(collection, project, class_name, current_name, new_name):
-    # Check if the attribute exists. If so, rename it.
-    data = MongoFunctions.get_attribute(collection, project, class_name, current_name)
-    if data is None:
-        print("There was an error deleting this class!")
-    else:
-        # Check if the new name is valid.
-        if len(new_name) < 1:
-            print("Please enter a valid name!")
-            return None
-        MongoFunctions.rename_attribute(collection, project, class_name, current_name, new_name)
+    return dbf.json_rename_class(project_data, old_name, new_name)
+
+# Function to rename a field in a class in the project data.
+def update_field_name(project_data, class_name, old_name, new_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    field_data = dbf.json_get_field(project_data, class_name, old_name)
+    if field_data is None:
+        print("Field does not exist.")
+        return project_data
+
+    return dbf.json_rename_field(project_data, class_name, old_name, new_name)
+
+# Function to rename a method in a class in the project data.
+def update_method_name(project_data, class_name, old_name, new_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    method_data = dbf.json_get_method(project_data, class_name, old_name)
+    if method_data is None:
+        print("Method does not exist.")
+        return project_data
+
+    return dbf.json_rename_method(project_data, class_name, old_name, new_name)
+
+# Function to rename a parameter in a method in the project data.
+def update_param_name(project_data, class_name, method_name, old_name, new_name):
+    class_data = dbf.json_get_class(project_data, class_name)
+    if class_data is None:
+        print("Class does not exist.")
+        return project_data
+    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    if method_data is None:
+        print("Method does not exist.")
+        return project_data
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, old_name)
+    if param_data is None:
+        print("Parameter does not exist.")
+        return project_data
+    return dbf.json_rename_parameter(project_data, class_name, method_name, old_name, new_name)
+    
 
 
 
