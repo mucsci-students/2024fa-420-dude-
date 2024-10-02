@@ -1,4 +1,3 @@
-import tinydb
 import json
 
 # Global for the JSON file format required by the backend functions

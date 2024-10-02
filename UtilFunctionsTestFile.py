@@ -1,6 +1,5 @@
 import Utility_Functions as uf
 import DBFunctions as dbf
-import pytest
 
 # The project data to pass around
 project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
