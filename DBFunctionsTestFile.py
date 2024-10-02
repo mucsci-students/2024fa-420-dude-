@@ -1,141 +1,214 @@
 import DBFunctions as dbf
-import json
 
 # Test connecting to a JSON file
-project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
-if project_data is None:
-    print("Could not connect to the JSON file.")
-    exit()
-print("\nFile Data:\n" + str(project_data))
+def test_json_connect(capsys):
+    assert dbf.json_read_file("json_files/TinyDBTestFile.json") is not None
+    captured = capsys.readouterr()
 
 # Test getting the classes from the JSON file
-classes = dbf.json_get_classes(project_data)
-print("\nClasses:\n" + str(classes))
+def test_json_get_classes(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    classes = dbf.json_get_classes(project_data)
+    assert classes is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting the relationships from the JSON file
-relationships = dbf.json_get_relationships(project_data)
-print("\nRelationships:\n" + str(relationships))
+def test_json_get_relationships(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    relationships = dbf.json_get_relationships(project_data)
+    assert relationships is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting a specific class from the JSON file
-class_name = "Tire"
-class_data = dbf.json_get_class(project_data, class_name)
-print("\nClass Data for " + class_name + ":\n" + str(class_data))
+def test_json_get_class(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Car"
+    class_data = dbf.json_get_class(project_data, class_name)
+    assert class_data is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting a relationship between two classes
-source_class = "Tire"
-destination_class = "Car"
-relationship = dbf.json_get_relationship(project_data, source_class, destination_class)
-print("\nRelationship between " + source_class + " and " + destination_class + ":\n" + str(relationship))
+def test_json_get_relationship(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    source_class = "Car"
+    destination_class = "Tire"
+    project_data = dbf.json_add_relationship(project_data, { "source": source_class, "destination": destination_class, "type": "Aggregation" })
+    relationship = dbf.json_get_relationship(project_data, source_class, destination_class)
+    assert relationship is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting the fields of a class
-class_name = "Tire"
-fields = dbf.json_get_fields(project_data, class_name)
-print("\nFields for " + class_name + ":\n" + str(fields))
+def test_json_get_fields(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Car"
+    fields = dbf.json_get_fields(project_data, class_name)
+    assert fields is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting the methods of a class
-class_name = "Tire"
-methods = dbf.json_get_methods(project_data, class_name)
-print("\nMethods for " + class_name + ":\n" + str(methods))
+def test_json_get_methods(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Car"
+    methods = dbf.json_get_methods(project_data, class_name)
+    assert methods is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test adding a class to the JSON file
-class_name = "Engine"
-fields = [{ "name": "cylinder" }, { "name": "displacement" }, { "name": "power" }]
-methods = [ { "name": "start", "params": [] }, { "name": "stop", "params": [] } ]
-new_class = { "name": class_name, "fields": fields, "methods": methods }
-project_data = dbf.json_add_class(project_data, new_class)
-print("\nUnsaved project data after adding " + class_name + ":\n" + str(project_data))
+def test_json_add_class(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_data = { "name": "Engine", "fields": [], "methods": [] }
+    project_data = dbf.json_add_class(project_data, class_data)
+    assert dbf.json_get_class(project_data, "Engine") is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test adding a relationship to the JSON file
-new_relationship = { "source": "Car", "destination": "Engine", "type": "Aggregation" }
-project_data = dbf.json_add_relationship(project_data, new_relationship)
-print("\nUnsaved project data after adding relationship between Car and Engine:\n" + str(project_data))
+def test_json_add_relationship(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    relationship_data = { "source": "Tire", "destination": "Car" }
+    project_data = dbf.json_add_relationship(project_data, relationship_data)
+    assert dbf.json_get_relationship(project_data, "Tire", "Car") is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test adding a field to a class
-field_data = { "name": "fuel" }
-project_data = dbf.json_add_field(project_data, "Engine", field_data)
-print("\nUnsaved project data after adding field to Engine:\n" + str(project_data))
+def test_json_add_field(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Engine"
+    field_data = { "name": "cylinder", "type": "int" }
+    project_data = dbf.json_add_field(project_data, class_name, field_data)
+    assert dbf.json_get_field(project_data, "Engine", "cylinder") is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test adding a method to a class
-method_data = { "name": "rev", "params": [] }
-project_data = dbf.json_add_method(project_data, "Engine", method_data)
-print("\nUnsaved project data after adding method to Engine:\n" + str(project_data))
+def test_json_add_method(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Engine"
+    method_data = { "name": "start", "return_type": "void" }
+    project_data = dbf.json_add_method(project_data, class_name, method_data)
+    assert dbf.json_get_method(project_data, "Engine", "start") is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test adding a parameter to a method
-method_name = "rev"
-param_data = { "name": "rpm" }
-project_data = dbf.json_add_parameter(project_data, "Engine", method_name, param_data)
-print("\nUnsaved project data after adding parameter to rev method in Engine:\n" + str(project_data))
+def test_json_add_parameter(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Tire"
+    method_name = "setPSI"
+    param_data = { "name": "currentPSI" }
+    project_data = dbf.json_add_parameter(project_data, class_name, method_name, param_data)
+    assert dbf.json_get_parameter(project_data, "Tire", "setPSI", "currentPSI") is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test getting the parameters of a method
-class_name = "Engine"
-method_name = "rev"
-params = dbf.json_get_parameters(project_data, class_name, method_name)
-print("\nParameters for " + method_name + " method in " + class_name + ":\n" + str(params))
+def test_json_get_parameters(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Tire"
+    method_name = "setPSI"
+    parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+    assert parameters is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test renaming a class
-old_class_name = "Engine"
-new_class_name = "Motor"
-project_data = dbf.json_rename_class(project_data, old_class_name, new_class_name)
-print("\nUnsaved project data after renaming " + old_class_name + " to " + new_class_name + ":\n" + str(project_data))
+def test_json_rename_class(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    old_class_name = "Engine"
+    new_class_name = "Motor"
+    project_data = dbf.json_rename_class(project_data, old_class_name, new_class_name)
+    assert dbf.json_get_class(project_data, new_class_name) is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test renaming a field
-class_name = "Motor"
-old_field_name = "cylinder"
-new_field_name = "cylinders"
-project_data = dbf.json_rename_field(project_data, class_name, old_field_name, new_field_name)
-print("\nUnsaved project data after renaming " + old_field_name + " to " + new_field_name + " in " + class_name + ":\n" + str(project_data))
+def test_json_rename_field(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Motor"
+    old_field_name = "cylinder"
+    new_field_name = "cylinders"
+    project_data = dbf.json_rename_field(project_data, class_name, old_field_name, new_field_name)
+    assert dbf.json_get_field(project_data, class_name, new_field_name) is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test renaming a method
-class_name = "Motor"
-old_method_name = "start"
-new_method_name = "ignite"
-project_data = dbf.json_rename_method(project_data, class_name, old_method_name, new_method_name)
-print("\nUnsaved project data after renaming " + old_method_name + " to " + new_method_name + " in " + class_name + ":\n" + str(project_data))
+def test_json_rename_method(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Motor"
+    old_method_name = "start"
+    new_method_name = "rev"
+    project_data = dbf.json_rename_method(project_data, class_name, old_method_name, new_method_name)
+    assert dbf.json_get_method(project_data, class_name, new_method_name) is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test renaming a parameter
-class_name = "Motor"
-method_name = "rev"
-old_param_name = "rpm"
-new_param_name = "revolutions"
-project_data = dbf.json_rename_parameter(project_data, class_name, method_name, old_param_name, new_param_name)
-print("\nUnsaved project data after renaming " + old_param_name + " to " + new_param_name + " in " + method_name + " method in " + class_name + ":\n" + str(project_data))
-
-# Save the project data to the JSON file
-dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
-project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
-print("\nFile after saving:\n" + str(project_data))
+def test_json_rename_parameter(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Tire"
+    method_name = "setPSI"
+    old_param_name = "currentPSI"
+    new_param_name = "nowPSI"
+    project_data = dbf.json_rename_parameter(project_data, class_name, method_name, old_param_name, new_param_name)
+    assert dbf.json_get_parameter(project_data, class_name, method_name, new_param_name) is not None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test deleting a parameter from a method
-class_name = "Motor"
-method_name = "rev"
-param_name = "revolutions"
-project_data = dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
-print("\nUnsaved project data after deleting " + param_name + " from " + method_name + " method in " + class_name + ":\n" + str(project_data))
+def test_json_delete_parameter(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Tire"
+    method_name = "setPSI"
+    param_name = "nowPSI"
+    project_data = dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
+    assert dbf.json_get_parameter(project_data, class_name, method_name, param_name) is None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test deleting a method from a class
-class_name = "Motor"
-method_name = "ignite"
-project_data = dbf.json_delete_method(project_data, class_name, method_name)
-print("\nUnsaved project data after deleting " + method_name + " from " + class_name + ":\n" + str(project_data))
+def test_json_delete_method(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Motor"
+    method_name = "rev"
+    project_data = dbf.json_delete_method(project_data, class_name, method_name)
+    assert dbf.json_get_method(project_data, class_name, method_name) is None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test deleting a field from a class
-class_name = "Motor"
-field_name = "cylinders"
-project_data = dbf.json_delete_field(project_data, class_name, field_name)
+def test_json_delete_field(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Motor"
+    field_name = "cylinders"
+    project_data = dbf.json_delete_field(project_data, class_name, field_name)
+    assert dbf.json_get_field(project_data, class_name, field_name) is None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test deleting a relationship from the JSON file
-source_class = "Tire"
-destination_class = "Car"
-project_data = dbf.json_delete_relationship(project_data, source_class, destination_class)
-print("\nUnsaved project data after deleting relationship between " + source_class + " and " + destination_class + ":\n" + str(project_data))
+def test_json_delete_relationship(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    source_class = "Tire"
+    destination_class = "Car"
+    project_data = dbf.json_delete_relationship(project_data, source_class, destination_class)
+    assert dbf.json_get_relationship(project_data, source_class, destination_class) is None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
 # Test deleting a class from the JSON file
-class_name = "Motor"
-project_data = dbf.json_delete_class(project_data, class_name)
-print("\nUnsaved project data after deleting " + class_name + ":\n" + str(project_data))
-
-# Save the project data to the JSON file
-dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
-project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
-print("\nFile after saving:\n" + str(project_data))
+def test_json_delete_class(capsys):
+    project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+    class_name = "Motor"
+    project_data = dbf.json_delete_class(project_data, class_name)
+    assert dbf.json_get_class(project_data, class_name) is None
+    captured = capsys.readouterr()
+    dbf.json_write_file("json_files/TinyDBTestFile.json", project_data)
 
