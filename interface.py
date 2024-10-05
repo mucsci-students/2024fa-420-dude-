@@ -1,9 +1,10 @@
-# This is the file that will be used for programming the interface.
+# This file controls the CLI.
 #maybe use argpars
 
 #pyunit for testing
 
-from DBFunctions import *
+from DBFunctions import json_get_classes, json_get_relationships, json_get_class, json_read_file, json_write_file
+from Utility_Functions import *
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -16,15 +17,11 @@ options = '''Commmands:
     mkrel [Type] [Class 1] [Class 2] : 
         - Create a new relationship between [Class 1] and [Class 2]
         - Type must be of Aggregation or Composition
-    rmrel [Type] [Class 1] [Class 2] : 
+    rmrel [Class 1] [Class 2] : 
         - Delete a relationship between [Class 1] and [Class 2]
         - Type must be of Aggregation or Composition
-    mkattr [Class] [Name] [Type] [Value] : 
-        - Create an attribute for [Class] with [Name]
-    rmattr [Class] [Name] [Type] [Value] : 
-        - Delete an attribute with [Name] from [Class]
-    chngattr [Class] [Attribute Name] [New Attribute Name] :
-        - Rename the attribute with [Attribute Name] from [Class] with [New Attribute Name]
+    mkfld [Class] [Name] ...
+    mkmthd [Class] [Name] ...
     save : 
         - Save the current project 
     load [Name] :
@@ -60,7 +57,7 @@ file_path = input("What project would you like to work on (note this is a file p
 while file_path == "":
     file_path = input("You must provide a project name (note this is a file path for now): ")
 # I must include a check if the file_path is valid.
-data = json_read_file(file_path)
+project_data = json_read_file(file_path)
 print("Enter a command, \nUse \"help\" for information")
 
 # Prompts the user for input
@@ -75,55 +72,45 @@ while command[0] != "exit":
     match command[0]:
         case "mkcls":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                # add_class(collection, project, command[1]) 
-                print("Not implemented")
+                add_class(project_data, command[1])
+                print("Added class " + command[1]) # Should add the ability to add fields and methods on class creation.
         case "rmcls":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                #delete_class(collection, project, command[1])
-                print("Not implemented")
+                delete_class(project_data, command[1])
+                print("Removed class " + command[1])
         case "chngcls":
             if wrong_amount_of_inputs_warning(command, 3) is False:
-                # rename_class(collection, project, command[1], command[2])
-                print("Not implemented")
+                update_class_name(project_data, command[1], command[2])
+                print("Changed class " + command[1] + " to " + command[2])
         case "mkrel":
             if wrong_amount_of_inputs_warning(command, 4) is False:
-                print("Not implemented")
-                #add_relationship(collection, project, command[1], command[2], command[3])
+                add_relationship(project_data, command[1], command[2], command[3])
+                print("Created relationship between " +  command[1] + " and " + command[2] + " with type " + command[3])
         case "rmrel":
-            if wrong_amount_of_inputs_warning(command, 4) is False:
-                print("Not implemented")
-                #delete_relationship(collection, project, command[1], command[2], command[3])
-        case "mkattr":
-            if wrong_amount_of_inputs_warning(command, 5) is False:
-                print("Not implemented")
-                #add_attribute(collection, project, command[1], command[2], command[3], command[4])
-        case "rmattr":
-            if wrong_amount_of_inputs_warning(command, 5) is False:
-                print("Not implemented")
-                # delete_attribute(collection, project, command[1], command[2], command[3], command[4])
-        case "chngattr":
-            if wrong_amount_of_inputs_warning(command, 4) is False:
-                print("Not implemented")
-                #rename_attribute(collection, project, command[1], command[2], command[3])
+            if wrong_amount_of_inputs_warning(command, 3) is False:
+                delete_relationship(project_data, command[1], command[2])
+                print("Removed relationship between class " + command[1] + " and " + command[2])
+        case "mkfld":
+            print("Not yet implemented")
+        case "mkmthd":
+            print("Not yet implemented")
         case "save":
-            print("Not implemented")
+            json_write_file(file_path, project_data)
+            print("Project Saved")
         case "load":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                if get_project(collection, command[1]) is None:
-                    # print("Project does not exist\n\tContinuing with project " + project)
-                    print("Not implemented")
-                else :
-                    print("Not implemented")
-                    # project = command[1]
+                print("Not implemented")
+            else :
+                print("Not implemented")
         case "lscls":
-            classes = json_get_classes(data) 
+            classes = json_get_classes(project_data) 
             print(classes)
         case "clsinfo":
             if wrong_amount_of_inputs_warning(command, 2) is False:
-                class_info = json_get_class(data, command[1])
+                class_info = json_get_class(project_data, command[1])
                 print(class_info)
         case "lsrel":
-            relationship = json_get_relationships(data)
+            relationship = json_get_relationships(project_data)
             print(relationship)
         case "help":
             print(options)
