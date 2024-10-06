@@ -4,7 +4,7 @@
 #pyunit for testing
 
 from DBFunctions import json_get_classes, json_get_relationships, json_get_class, json_read_file, json_write_file
-from Utility_Functions import *
+import Utility_Functions as uf
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -39,7 +39,8 @@ options = '''Commmands:
 
 #####################   Functions  ######################
 
-def wrong_amount_of_inputs_warning(command, number_required) -> bool:
+# Checks if the user provided more or less arguments than the number_required
+def correct_amount_of_inputs_warning(command, number_required) -> bool:
     argument_not_met = False
     if len(command) < number_required :
         print("Incorrect number of arguments.\n\tUse \"help\" for information")
@@ -50,14 +51,22 @@ def wrong_amount_of_inputs_warning(command, number_required) -> bool:
     else:
         return argument_not_met
 
+# Returns the project data for the given file_path
+def get_file(file_path):
+    try :
+        project_data = json_read_file(file_path)
+        if project_data is None:
+            raise FileNotFoundError
+    except :
+        print(file_path + " not a valid file path.")
+        file_path = input("You must provide a project name (note this is a file path): ")
+        return get_file(file_path)
+    return project_data
+
 ##################  Main Execution Section  ##################
 
-
-file_path = input("What project would you like to work on (note this is a file path for now): ")
-while file_path == "":
-    file_path = input("You must provide a project name (note this is a file path for now): ")
-# I must include a check if the file_path is valid.
-project_data = json_read_file(file_path)
+file_path = input("Please enter the file you wish to use: ")
+project_data = get_file(file_path)
 print("Enter a command, \nUse \"help\" for information")
 
 # Prompts the user for input
@@ -71,42 +80,46 @@ if len(command) == 0:
 while command[0] != "exit":
     match command[0]:
         case "mkcls":
-            if wrong_amount_of_inputs_warning(command, 2) is False:
-                add_class(project_data, command[1])
-                print("Added class " + command[1]) # Should add the ability to add fields and methods on class creation.
+            if correct_amount_of_inputs_warning(command, 2) is True:
+                project_data = uf.add_class(project_data, command[1])
+                print("Added class " + command[1]) #TODO: Should add the ability to add fields and methods on class creation.
         case "rmcls":
-            if wrong_amount_of_inputs_warning(command, 2) is False:
-                delete_class(project_data, command[1])
+            if correct_amount_of_inputs_warning(command, 2) is True:
+                project_data = uf.delete_class(project_data, command[1])
                 print("Removed class " + command[1])
         case "chngcls":
-            if wrong_amount_of_inputs_warning(command, 3) is False:
-                update_class_name(project_data, command[1], command[2])
+            if correct_amount_of_inputs_warning(command, 3) is True:
+                project_data = uf.update_class_name(project_data, command[1], command[2])
                 print("Changed class " + command[1] + " to " + command[2])
         case "mkrel":
-            if wrong_amount_of_inputs_warning(command, 4) is False:
-                add_relationship(project_data, command[1], command[2], command[3])
+            if correct_amount_of_inputs_warning(command, 4) is True:
+                project_data = uf.add_relationship(project_data, command[1], command[2], command[3])
                 print("Created relationship between " +  command[1] + " and " + command[2] + " with type " + command[3])
         case "rmrel":
-            if wrong_amount_of_inputs_warning(command, 3) is False:
-                delete_relationship(project_data, command[1], command[2])
+            if correct_amount_of_inputs_warning(command, 3) is True:
+                project_data = uf.delete_relationship(project_data, command[1], command[2])
                 print("Removed relationship between class " + command[1] + " and " + command[2])
         case "mkfld":
+            #TODO: 
             print("Not yet implemented")
         case "mkmthd":
+            #TODO:
             print("Not yet implemented")
         case "save":
             json_write_file(file_path, project_data)
             print("Project Saved")
         case "load":
-            if wrong_amount_of_inputs_warning(command, 2) is False:
-                print("Not implemented")
-            else :
-                print("Not implemented")
+            if correct_amount_of_inputs_warning(command, 2) is True:
+                check_save= input("Would you like to save your current project? (N/y): ")
+                check_save.lower()
+                if check_save == "y" or check_save == "yes":
+                    json_write_file(file_path, project_data)
+                project_data = check_file_path(command[1])
         case "lscls":
             classes = json_get_classes(project_data) 
             print(classes)
         case "clsinfo":
-            if wrong_amount_of_inputs_warning(command, 2) is False:
+            if correct_amount_of_inputs_warning(command, 2) is True:
                 class_info = json_get_class(project_data, command[1])
                 print(class_info)
         case "lsrel":
