@@ -1,4 +1,4 @@
-import MongoFunctions
+import DBFunctions
 import Utility_Functions
 import sys
 import random
@@ -35,7 +35,7 @@ class ClassBox(QGraphicsRectItem):
         self.relationships = []
 
     def format_attributes(self):
-        return "\n".join(self.attributes)
+        return "".join(self.attributes)
 
     def add_relationship(self, relationship):
         self.relationships.append(relationship)
@@ -55,6 +55,7 @@ class RelationshipLine(QGraphicsLineItem):
         self.class_box_b.add_relationship(self)
 
         self.update_line()
+
     # Functionality for arealtionship line.
     def update_line(self):
         start_point = self.class_box_a.rect().bottomLeft() + self.class_box_a.pos()
@@ -92,9 +93,9 @@ class UMLScene(QGraphicsScene):
 
             class_box.setPos(position)
             self.addItem(class_box)
-    # Handles finding a random spaw position for a new box.
+
+    # Handles finding a random spaw position for a new box to make sure of no overlapings.
     def find_non_overlapping_position(self, class_box):
-        """Find a random position that doesn't overlap with existing class boxes."""
         max_attempts = 100
         for _ in range(max_attempts):
             random_x = random.uniform(0, self.width() - class_box.rect().width())
@@ -106,9 +107,9 @@ class UMLScene(QGraphicsScene):
 
         # If no valid position is found after max_attempts, return a default position
         return QPointF(10, 10)
+    
     # Checks to make sure a position is valid before creating it.
     def is_position_valid(self, new_position, class_box):
-        """Check if the position is valid (i.e., no overlap with existing boxes)."""
         new_rect = class_box.rect().translated(new_position)
 
         for item in self.items():
@@ -128,7 +129,62 @@ class UMLGraphicsView(QGraphicsView):
         super(UMLGraphicsView, self).__init__(scene)
         self.setRenderHint(QPainter.Antialiasing, True)
 
-# Dialog for creating a class.
+# Dialog to create a field.
+class AddFieldDialog(QDialog):
+    def __init__(self):
+        super(AddFieldDialog, self).__init__()
+
+        self.setWindowTitle("Add Field")
+        self.layout = QVBoxLayout()
+
+        self.name_label = QLabel("Field Name:")
+        self.name_input = QLineEdit()
+        self.layout.addWidget(self.name_label)
+        self.layout.addWidget(self.name_input)
+
+        self.submit_button = QPushButton("Add Field")
+        self.submit_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.submit_button)
+
+        self.setLayout(self.layout)
+
+    def get_field_name(self):
+        return self.name_input.text()
+
+# Dialog to create a method.
+class AddMethodDialog(QDialog):
+    def __init__(self):
+        super(AddMethodDialog, self).__init__()
+
+        self.setWindowTitle("Add Method")
+        self.layout = QVBoxLayout()
+
+        # Method name
+        self.name_label = QLabel("Method Name:")
+        self.name_input = QLineEdit()
+        self.layout.addWidget(self.name_label)
+        self.layout.addWidget(self.name_input)
+
+        # Parameters (comma-separated)
+        self.params_label = QLabel("Parameters (comma separated):")
+        self.params_input = QLineEdit()
+        self.layout.addWidget(self.params_label)
+        self.layout.addWidget(self.params_input)
+
+        # Submit button
+        self.submit_button = QPushButton("Add Method")
+        self.submit_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.submit_button)
+
+        self.setLayout(self.layout)
+
+    def get_method_name(self):
+        return self.name_input.text()
+
+    def get_parameters(self):
+        return [param.strip() for param in self.params_input.text().split(",")]
+
+# Dialog to create a class.
 class ClassDialog(QDialog):
     def __init__(self):
         super(ClassDialog, self).__init__()
@@ -136,27 +192,83 @@ class ClassDialog(QDialog):
         self.setWindowTitle("Create Class")
         self.layout = QVBoxLayout()
 
+        # Class name
         self.name_label = QLabel("Class Name:")
         self.name_input = QLineEdit()
         self.layout.addWidget(self.name_label)
         self.layout.addWidget(self.name_input)
 
-        self.attr_label = QLabel("Attributes (comma separated):")
-        self.attr_input = QLineEdit()
-        self.layout.addWidget(self.attr_label)
-        self.layout.addWidget(self.attr_input)
+        # Attributes list (for methods)
+        self.methods_list = []  # To store methods
+        self.fields_list = []      # To store fields separately
 
-        self.submit_button = QPushButton("Create")
+        self.attributes_display = QLabel("Attributes:\n")
+        self.layout.addWidget(self.attributes_display)
+
+        # Add attribute button
+        self.add_attribute_button = QPushButton("Add Attribute")
+        self.add_attribute_button.clicked.connect(self.on_add_attribute)
+        self.layout.addWidget(self.add_attribute_button)
+
+        # Submit button
+        self.submit_button = QPushButton("Create Class")
         self.submit_button.clicked.connect(self.accept)
         self.layout.addWidget(self.submit_button)
 
         self.setLayout(self.layout)
 
+    def on_add_attribute(self):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Pick Type")
+        msg_box.setText("Select Attribute Type:")
+        field_button = msg_box.addButton("Field", QMessageBox.ActionRole)
+        method_button = msg_box.addButton("Method", QMessageBox.ActionRole)
+        msg_box.exec_()
+
+        if msg_box.clickedButton() == field_button:
+            self.add_field()
+        elif msg_box.clickedButton() == method_button:
+            self.add_method()
+
+    def add_field(self):
+        field_dialog = AddFieldDialog()
+        if field_dialog.exec_():
+            field_name = field_dialog.get_field_name()
+            if field_name:
+                self.fields_list.append(field_name)  # Store field in fields_list
+                self.update_attributes_display()
+
+    def add_method(self):
+        method_dialog = AddMethodDialog()
+        if method_dialog.exec_():
+            method_name = method_dialog.get_method_name()
+            parameters = method_dialog.get_parameters()
+            if method_name:
+                param_list = ", ".join(parameters)
+                self.methods_list.append(f"{method_name}({param_list})")  # Store method in attributes_list
+                self.update_attributes_display()
+
+    def update_attributes_display(self):
+        fields_text = ", ".join([f"{field}" for field in self.fields_list])
+        methods_text = "\n".join([f"Method: {method}" for method in self.methods_list])
+
+        attributes_text = "Attributes:\n" + "Field: " + fields_text + "\n" + methods_text
+        self.attributes_display.setText(attributes_text)
+
+    def get_attributes(self):
+        fields_text = ", ".join(self.fields_list) if self.fields_list else "None"
+        methods_text = "\n".join([f"Method: {method}" for method in self.methods_list]) if self.methods_list else "None"
+        return f"Fields: {fields_text}\nMethods:\n{methods_text}"
+
+
+    # Returns class name.
     def get_class_name(self):
         return self.name_input.text()
 
-    def get_attributes(self):
-        return [attr.strip() for attr in self.attr_input.text().split(",")]
+     # Returns the list of fields
+    def get_fields(self):
+        return self.fields_list  
+
 
 # Dialog for creating a relationship.
 class RelationshipDialog(QDialog):
@@ -176,6 +288,11 @@ class RelationshipDialog(QDialog):
         self.layout.addWidget(self.label_b)
         self.layout.addWidget(self.input_b)
 
+        self.label_c = QLabel("Relationship Type:")
+        self.input_c = QLineEdit()
+        self.layout.addWidget(self.label_c)
+        self.layout.addWidget(self.input_c)
+
         self.submit_button = QPushButton("Create Relationship")
         self.submit_button.clicked.connect(self.accept)
         self.layout.addWidget(self.submit_button)
@@ -184,6 +301,9 @@ class RelationshipDialog(QDialog):
 
     def get_selected_classes(self):
         return self.input_a.text(), self.input_b.text()
+    
+    def get_type(self):
+        return self.input_c.text()
 
 class UMLApp(QMainWindow):
     def __init__(self):
@@ -225,7 +345,9 @@ class UMLApp(QMainWindow):
             if not class_a_name or not class_b_name:
                 QMessageBox.warning(self, "Warning", "Please enter both class names.")
                 return
-            
+            if (relationship_dialog.get_type() != "Aggregation") and  (relationship_dialog.get_type() != "Composition") and (relationship_dialog.get_type() != "Realization") and (relationship_dialog.get_type() != "Inheritance"):
+                QMessageBox.warning(self, "Warning", "Please enter a valid type.")
+                return
             class_box_a = next((box for box in class_boxes if box.name == class_a_name), None)
             class_box_b = next((box for box in class_boxes if box.name == class_b_name), None)
 
