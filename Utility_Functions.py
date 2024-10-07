@@ -97,7 +97,7 @@ def add_relationship(collection, project, type, class1_name, class2_name):
         return None
 
     # Check if the relationship type is valid.
-    if (type != "Aggregation") and (type != "Composition"):
+    if (type != "Aggregation") and (type != "Composition") and (type != "Inheritance")and (type != "Realization"):
         print("Type is not a valid relationship type!")
         return None
 
@@ -140,7 +140,9 @@ def add_attribute(collection, project, class_name, attribute_name, type, value):
     # Checks if the attribute already exists.
     data = MongoFunctions.get_attribute(collection, project, class_name, attribute_name)
     # If the attribute already exists, return the data for the preexisting attribute.
-    if data is not None: return data
+    if data is not None:
+        print("Attribute already exists!")
+        return data
 
     # Create the attribute object.
     attribute_object = {
