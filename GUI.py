@@ -5,7 +5,7 @@ import random
 from PyQt5.QtWidgets import (
     QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
     QGraphicsTextItem, QVBoxLayout, QDialog, QPushButton, QLineEdit,
-    QLabel, QMainWindow, QWidget, QMessageBox
+    QLabel, QMainWindow, QWidget, QMessageBox, QInputDialog
 )
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QRectF, QLineF, QPointF
@@ -122,6 +122,40 @@ class UMLScene(QGraphicsScene):
                         return False
 
         return True
+    
+    # Handles deleting the class box.
+    def delete_class_box(self):
+        selected_items = self.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(None, "Warning", "No class box selected.")
+            return
+
+        for item in selected_items:
+            if isinstance(item, ClassBox):
+                # Remove relationships connected to the class box
+                for relationship in item.relationships[:]:
+                    self.removeItem(relationship)
+                    relationship.class_box_a.remove_relationship(relationship)
+                    relationship.class_box_b.remove_relationship(relationship)
+
+                # Remove the class box itself
+                self.removeItem(item)
+
+    # Handles renaming a class.
+    def rename_class_box(self):
+        selected_items = self.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(None, "Warning", "No class box selected.")
+            return
+
+        for item in selected_items:
+            if isinstance(item, ClassBox):
+                # Show dialog to input the new name
+                new_name, ok = QInputDialog.getText(None, "Rename Class", "Enter new class name:")
+                if ok and new_name:
+                    item.name = new_name
+                    item.text.setPlainText(new_name)  # Update the displayed name
+
     
 # Needed to make the GUI flow.
 class UMLGraphicsView(QGraphicsView):
@@ -250,14 +284,14 @@ class ClassDialog(QDialog):
 
     def update_attributes_display(self):
         fields_text = ", ".join([f"{field}" for field in self.fields_list])
-        methods_text = "\n".join([f"Method: {method}" for method in self.methods_list])
+        methods_text = "\n".join([f"{method}" for method in self.methods_list])
 
-        attributes_text = "Attributes:\n" + "Field: " + fields_text + "\n" + methods_text
+        attributes_text = "Attributes:\n" + "Fields: " + fields_text + "\nMethods: " + methods_text
         self.attributes_display.setText(attributes_text)
 
     def get_attributes(self):
         fields_text = ", ".join(self.fields_list) if self.fields_list else "None"
-        methods_text = "\n".join([f"Method: {method}" for method in self.methods_list]) if self.methods_list else "None"
+        methods_text = ", ".join([f"{method}" for method in self.methods_list]) if self.methods_list else "None"
         return f"Fields: {fields_text}\nMethods:\n{methods_text}"
 
 
@@ -319,19 +353,84 @@ class UMLApp(QMainWindow):
 
         self.layout.addWidget(self.view)
 
+        # Code to create all buttons.
+
         self.create_button = QPushButton("Create Class")
         self.create_button.clicked.connect(self.on_create_class)
         self.layout.addWidget(self.create_button)
 
+        self.delete_button = QPushButton("Delete Class")
+        self.delete_button.clicked.connect(self.on_delete_class)
+        self.layout.addWidget(self.delete_button)
+
+        self.rename_button = QPushButton("Rename Class")
+        self.rename_button.clicked.connect(self.on_rename_class)
+        self.layout.addWidget(self.rename_button)
+
         self.create_relationship_button = QPushButton("Create Relationship")
         self.create_relationship_button.clicked.connect(self.on_create_relationship)
         self.layout.addWidget(self.create_relationship_button)
+
+        self.save_button = QPushButton("Save File")
+        self.save_button.clicked.connect(self.on_save)
+        self.layout.addWidget(self.save_button)
+
+        self.load_button = QPushButton("Load File")
+        self.load_button.clicked.connect(self.on_load)
+        self.layout.addWidget(self.load_button)
+        
+
 
         self.setWindowTitle("UML Class Diagram Editor")
         self.setGeometry(100, 100, 900, 600)
 
     def on_create_class(self):
         self.scene.add_class_box()
+
+    def on_delete_class(self):
+        # Gets the selected item in the scene
+        selected_items = self.scene.selectedItems()
+
+        if not selected_items:
+            QMessageBox.warning(self, "Warning", "Please select a class to delete.")
+            return
+
+        # Assume we are dealing with ClassBox instances
+        for item in selected_items:
+            if isinstance(item, ClassBox):
+                # Remove the associated relationships from the scene as well
+                for relationship in item.relationships:
+                    self.scene.removeItem(relationship)
+                    item.remove_relationship(relationship)
+
+                # Remove the class box itself
+                self.scene.removeItem(item)
+
+
+    def on_rename_class(self):
+        # Get the selected items in the scene
+        selected_items = self.scene.selectedItems()
+
+        if not selected_items:
+            QMessageBox.warning(self, "Warning", "Please select a class to rename.")
+            return
+
+        # Assume we are dealing with ClassBox instances
+        for item in selected_items:
+            if isinstance(item, ClassBox):
+                # Get the current name
+                current_name = item.name
+            
+                # Prompt the user for a new name
+                new_name, ok = QInputDialog.getText(self, "Rename Class", "Enter new class name:", text=current_name)
+            
+                if ok and new_name:  # Ensure the dialog was not cancelled and the new name is not empty
+                    # Update the class box's name
+                    item.name = new_name
+                
+                    # Update the displayed text in the graphics scene
+                    item.text.setPlainText(new_name)
+
 
     def on_create_relationship(self):
         class_boxes = [item for item in self.scene.items() if isinstance(item, ClassBox)]
@@ -354,6 +453,12 @@ class UMLApp(QMainWindow):
             if class_box_a and class_box_b:
                 relationship = RelationshipLine(class_box_a, class_box_b)
                 self.scene.addItem(relationship)
+
+    def on_save(self):
+        '''Add code to save to json file'''
+
+    def on_load(self):
+        '''Add code to load from json file'''
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
