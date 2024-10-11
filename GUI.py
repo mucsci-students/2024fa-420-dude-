@@ -187,7 +187,7 @@ class AddFieldDialog(QDialog):
 
 # Dialog to create a method.
 class AddMethodDialog(QDialog):
-    def __init__(self):
+    def __init__(self, existing_parameters=None):
         super(AddMethodDialog, self).__init__()
 
         self.setWindowTitle("Add Method")
@@ -205,6 +205,10 @@ class AddMethodDialog(QDialog):
         self.layout.addWidget(self.params_label)
         self.layout.addWidget(self.params_input)
 
+        # If there are existing parameters, populate the input field
+        if existing_parameters:
+            self.params_input.setText(", ".join(existing_parameters))
+
         # Submit button
         self.submit_button = QPushButton("Add Method")
         self.submit_button.clicked.connect(self.accept)
@@ -217,6 +221,7 @@ class AddMethodDialog(QDialog):
 
     def get_parameters(self):
         return [param.strip() for param in self.params_input.text().split(",")]
+
 
 # Dialog to create a class.
 class ClassDialog(QDialog):
@@ -232,9 +237,9 @@ class ClassDialog(QDialog):
         self.layout.addWidget(self.name_label)
         self.layout.addWidget(self.name_input)
 
-        # Attributes list (for methods)
-        self.methods_list = []  # To store methods
-        self.fields_list = []      # To store fields separately
+        # Store fields and methods separately
+        self.methods_list = []  # To store methods with their parameters
+        self.fields_list = []
 
         self.attributes_display = QLabel("Attributes:\n")
         self.layout.addWidget(self.attributes_display)
@@ -269,29 +274,92 @@ class ClassDialog(QDialog):
         if field_dialog.exec_():
             field_name = field_dialog.get_field_name()
             if field_name:
-                self.fields_list.append(field_name)  # Store field in fields_list
+                self.fields_list.append(field_name)
                 self.update_attributes_display()
 
-    def add_method(self):
-        method_dialog = AddMethodDialog()
+    def add_method(self, method_name=None, existing_parameters=None):
+        method_dialog = AddMethodDialog(existing_parameters=existing_parameters)
         if method_dialog.exec_():
             method_name = method_dialog.get_method_name()
             parameters = method_dialog.get_parameters()
             if method_name:
                 param_list = ", ".join(parameters)
-                self.methods_list.append(f"{method_name}({param_list})")  # Store method in attributes_list
+                method = {"name": method_name, "parameters": parameters}
+                self.methods_list.append(method)
                 self.update_attributes_display()
 
     def update_attributes_display(self):
-        fields_text = ", ".join([f"{field}" for field in self.fields_list])
-        methods_text = "\n".join([f"{method}" for method in self.methods_list])
+        fields_text = ", ".join(self.fields_list)
+        methods_text = "\n".join(
+            [f"Method: {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
+        )
 
-        attributes_text = "Attributes:\n" + "Fields: " + fields_text + "\nMethods: " + methods_text
+        attributes_text = "Attributes:\n" + "Field: " + fields_text + "\n" + methods_text
         self.attributes_display.setText(attributes_text)
+
+    def on_edit_method_parameters(self):
+        # Get class name
+        class_name, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Class Name", "Enter the class name:")
+        if not ok1 or not class_name:
+            return  # User canceled or provided no class name
+
+        # Get method name
+        method_name, ok2 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Method Name", "Enter the method name:")
+        if not ok2 or not method_name:
+            return  # User canceled or provided no method name
+
+        
+        # Search for the class box by class name in backend.
+        class_box = next((box for box in UMLScene.items if isinstance(box, ClassBox) and box.name == class_name), None)
+
+        if class_box is None:
+            QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
+            return
+
+        # Find the method in the class box's attributes (methods)
+        method_found = None
+        for method in class_box.methods_list:
+            if method.startswith(method_name + "("):  # Match the method by its name
+                method_found = method
+                break
+
+        if method_found is None:
+            QMessageBox.warning(self, "Warning", f"Method '{method_name}' not found in class '{class_name}'.")
+            return
+
+        # Existing parameters
+        existing_parameters = method_found.split('(')[1][:-1]  # Extract parameters within parentheses
+        QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
+
+        # Let user edit the parameters
+        new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
+        if not ok3:
+            return  # User canceled
+
+        # Update the method with the new parameters
+        class_box.methods_list.remove(method_found)
+        class_box.methods_list.append(f"{method_name}({new_parameters})")
+        class_box.update_attributes_display()
+
+
+
+    def edit_method(self, method_index):
+        method_to_edit = self.methods_list[method_index]
+        method_name = method_to_edit['name']
+        existing_parameters = method_to_edit['parameters']
+
+        # Re-open dialog to edit method name and parameters
+        self.add_method(method_name=method_name, existing_parameters=existing_parameters)
+
+        # Update the method in the list after editing
+        self.methods_list[method_index] = {"name": method_name, "parameters": existing_parameters}
+        self.update_attributes_display()
 
     def get_attributes(self):
         fields_text = ", ".join(self.fields_list) if self.fields_list else "None"
-        methods_text = ", ".join([f"{method}" for method in self.methods_list]) if self.methods_list else "None"
+        methods_text = "\n".join(
+            [f"Method: {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
+        ) if self.methods_list else "None"
         return f"Fields: {fields_text}\nMethods:\n{methods_text}"
 
 
@@ -366,6 +434,10 @@ class UMLApp(QMainWindow):
         self.rename_button = QPushButton("Rename Class")
         self.rename_button.clicked.connect(self.on_rename_class)
         self.layout.addWidget(self.rename_button)
+
+        self.edit_method_button = QPushButton("Edit Method Parameters")
+        self.edit_method_button.clicked.connect(ClassDialog.on_edit_method_parameters)
+        self.layout.addWidget(self.edit_method_button)
 
         self.create_relationship_button = QPushButton("Create Relationship")
         self.create_relationship_button.clicked.connect(self.on_create_relationship)
