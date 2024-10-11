@@ -4,7 +4,7 @@
 #pyunit for testing
 
 from DBFunctions import json_get_classes, json_get_relationships, json_get_class, json_read_file, json_write_file
-import Utility_Functions as uf
+from Utility_Functions import *
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -20,8 +20,14 @@ options = '''Commmands:
     rmrel [Class 1] [Class 2] : 
         - Delete a relationship between [Class 1] and [Class 2]
         - Type must be of Aggregation or Composition
-    mkfld [Class] [Name] ...
-    mkmthd [Class] [Name] ...
+    mkfld [Class] :
+        - Adds fields to the specified [Class]
+    rmfld [Class] [Name] :
+        - Removes the field [Name] from the class with name [Class]
+    mkmthd [Class] [Method Name] :
+        - Creates methods until "done" is input
+    rmmthd [Class] [Method Name] :
+        - Removes parameters from [Method Name] from [Class]
     save : 
         - Save the current project 
     load [Name] :
@@ -41,15 +47,15 @@ options = '''Commmands:
 
 # Checks if the user provided more or less arguments than the number_required
 def correct_amount_of_inputs_warning(command, number_required) -> bool:
-    argument_not_met = False
+    argument_met = True
     if len(command) < number_required :
         print("Incorrect number of arguments.\n\tUse \"help\" for information")
-        argument_not_met = True
+        argument_met = False 
     elif len(command) > number_required :
         print("Too many arguments.\n\tTip: Names must be one word.")
-        argument_not_met = True
+        argument_met = False 
     else:
-        return argument_not_met
+        return argument_met
 
 # Returns the project data for the given file_path
 def get_file(file_path):
@@ -81,40 +87,82 @@ while command[0] != "exit":
     match command[0]:
         case "mkcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                project_data = uf.add_class(project_data, command[1])
-                print("Added class " + command[1]) #TODO: Should add the ability to add fields and methods on class creation.
+                project_data = add_class(project_data, command[1])
+                print("Added class " + command[1])
         case "rmcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                project_data = uf.delete_class(project_data, command[1])
+                project_data = delete_class(project_data, command[1])
                 print("Removed class " + command[1])
+                # Currently printing regardless of whether or not the class exist
         case "chngcls":
             if correct_amount_of_inputs_warning(command, 3) is True:
-                project_data = uf.update_class_name(project_data, command[1], command[2])
+                project_data = update_class_name(project_data, command[1], command[2])
                 print("Changed class " + command[1] + " to " + command[2])
         case "mkrel":
             if correct_amount_of_inputs_warning(command, 4) is True:
-                project_data = uf.add_relationship(project_data, command[1], command[2], command[3])
-                print("Created relationship between " +  command[1] + " and " + command[2] + " with type " + command[3])
+                type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
+                if command[1] in type_list:
+                    project_data = add_relationship(project_data, command[2], command[3], command[1])
+                    print("Created relationship between " +  command[1] + " and " + command[2] + " with type " + command[3])
+                else :
+                    print("Type must be one of: Aggregation, Composition, Inheritance, Realization")
         case "rmrel":
             if correct_amount_of_inputs_warning(command, 3) is True:
-                project_data = uf.delete_relationship(project_data, command[1], command[2])
+                project_data = delete_relationship(project_data, command[1], command[2])
                 print("Removed relationship between class " + command[1] + " and " + command[2])
         case "mkfld":
             #TODO: 
-            print("Not yet implemented")
+            if correct_amount_of_inputs_warning(command, 2) is True:
+                print("Provide a field, type \"done\" when finished.")
+                field = input("AddField: ")
+                field_list = []
+                while field.lower() != "done":
+                    if field == "":
+                        while field == "":
+                            print("Must provide a field name")
+                            field = input("AddField: ")
+                    add_field(project_data, command[1], field)
+                    field_list.append(field)
+                    field = input("AddField: ")
+                print("Added fields [", end="")
+                print(*field_list, sep=", ", end="")
+                print("]")
+        case "rmfld":
+            if correct_amount_of_inputs_warning(command, 3):
+                project_data = delete_field(project_data, command[1], command[2])
+                print("Removed field " + command[2] + " from class " + command[1])
         case "mkmthd":
-            #TODO:
-            print("Not yet implemented")
+            if correct_amount_of_inputs_warning(command, 3):
+                print("Provide parameter, type \"done\" when finished.")
+                parameter =  input("AddParam: ")
+                parameter_list = []
+                #Can fix this by do while
+                while parameter != "done":
+                    if parameter == "":
+                        while field == "":
+                            print("Must provide a field name")
+                            parameter = input("AddField: ")
+                    parameter_list.append(parameter)
+                    parameter = input("AddParam: ")
+                add_method(project_data, command[1], command[2], parameter_list)
+        case "rmmthd":
+            if correct_amount_of_inputs_warning(command, 3):
+                delete_method(project_data, command[1], command[2])
+                print("Removed method " + command[2] + " from class " + command[1])
         case "save":
             json_write_file(file_path, project_data)
             print("Project Saved")
         case "load":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                check_save= input("Would you like to save your current project? (N/y): ")
-                check_save.lower()
+                # Checks if the user wants to save the file before loading another
+                check_save = input("Would you like to save your current project? (N/y): ").lower()
+                while check_save != "n" and check_save != "no" and check_save != "y" and check_save != "yes":
+                        check_save = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
+                # save the file
                 if check_save == "y" or check_save == "yes":
                     json_write_file(file_path, project_data)
-                project_data = check_file_path(command[1])
+                # Loads the new file
+                project_data = check_file_path(command[1]) 
         case "lscls":
             classes = json_get_classes(project_data) 
             print(classes)
@@ -139,4 +187,10 @@ while command[0] != "exit":
         command = [" "]
 
 # Exits the program
+user_input = input("Would you like to save? (N/y): ").lower()
+while user_input != "n" and user_input != "no" and user_input != "y" and user_input != "yes":
+    user_input = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
+if user_input == "y" or user_input == "yes":
+    json_write_file(file_path, project_data)
+    print(file_path + " project saved")
 exit(0)

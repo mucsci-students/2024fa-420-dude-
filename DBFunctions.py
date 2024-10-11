@@ -79,7 +79,8 @@ def json_get_class(data, class_name):
     for c in class_data:
         if c["name"] == class_name:
             return c
-    print("Class not found. Class may not exist.")
+    # Commented this out so it would not intefer with the cli interface.
+    # print("Class not found. Class may not exist.")
     return None
 
 # Function to get a relationship between two classes
@@ -92,7 +93,8 @@ def json_get_relationship(data, source_class, destination_class):
     for r in relationship_data:
         if r["source"] == source_class and r["destination"] == destination_class:
             return r
-    print("Relationship not found. One or more classes may not exist or a relationship may not exist.")
+    # Commented this out so it would not intefer with the cli interface.
+    # print("Relationship not found. One or more classes may not exist or a relationship may not exist.")
     return None
 
 # Function to get the fields of a class
@@ -148,7 +150,7 @@ def json_get_method(data, class_name, method_name):
     for m in methods:
         if m["name"] == method_name:
             return m
-    print("Method not found. Method may not exist.")
+    # print("Method not found. Method may not exist.")
     return None
 
 # Function to get the parameters of a method
