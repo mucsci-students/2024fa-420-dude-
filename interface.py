@@ -155,8 +155,7 @@ while command[0] != "exit":
             print(classes)
         case "clsinfo":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                class_info = json_get_class(project_data, command[1])
-                print(class_info)
+                display_class(project_data, command[1])
         case "lsrel":
             relationship = json_get_relationships(project_data)
             print(relationship)
