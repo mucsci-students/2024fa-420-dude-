@@ -151,8 +151,7 @@ while command[0] != "exit":
                 # Loads the new file
                 project_data = check_file_path(command[1]) 
         case "lscls":
-            classes = json_get_classes(project_data) 
-            print(classes)
+            display_all_classes(project_data)
         case "clsinfo":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 display_class(project_data, command[1])
