@@ -233,6 +233,7 @@ def update_param_name(project_data, class_name, method_name, old_name, new_name)
         print("Parameter does not exist.")
         return project_data
     return dbf.json_rename_parameter(project_data, class_name, method_name, old_name, new_name)
+    
 
 ############### All display functions. ####################
 
@@ -247,7 +248,6 @@ def display_class(project_data, class_name):
     print("Fields:")
     for field in class_data["fields"]:
         print(field["name"])
-
     print("Methods:")
     for method in class_data["methods"]:
         param_string = "("
@@ -256,7 +256,7 @@ def display_class(project_data, class_name):
         param_string = param_string[:-2] + ")"
         print(method["name"] + param_string + "\n")
     return project_data
-
+    
 # Function to display a relationship in the project data.
 def display_relationship(project_data, source, dest):
     rel_data = dbf.json_get_relationship(project_data, source, dest)
@@ -267,5 +267,6 @@ def display_relationship(project_data, source, dest):
     print("Source: " + rel_data["source"])
     print("Destination: " + rel_data["destination"])
     print("Type: " + rel_data["type"] + "\n")
+
 
 
