@@ -253,7 +253,10 @@ def display_class(project_data, class_name):
         param_string = "("
         for param in method["params"]:
             param_string += param["name"] + ", "
-        param_string = param_string[:-2] + ")"
+        if len(param_string) > 1:
+            param_string = param_string[:-2] + ")"
+        else:
+            param_string += ")"
         print(method["name"] + param_string + "\n")
     return project_data
     
