@@ -78,9 +78,12 @@ def add_method(project_data, class_name, method_name, params):
         print("Method already exists.")
         return project_data
 
+    param_list = []
+    for param in params:
+        param_list.append({ "name": param })
     method_data = {
         "name": method_name,
-        "params": params
+        "params": param_list
     }
     print("Added parameters [", end="")
     print(*params, sep=", ", end="")
