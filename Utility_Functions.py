@@ -270,6 +270,24 @@ def display_relationship(project_data, source, dest):
     print("Source: " + rel_data["source"])
     print("Destination: " + rel_data["destination"])
     print("Type: " + rel_data["type"] + "\n")
+    return project_data
+
+
+############### Create file function. ####################
+
+# Function to create a new project data file.
+def create_project_data_file(file_path):
+    project_data = {
+        "classes": [],
+        "relationships": []
+    }
+    dbf.json_write_file(file_path, project_data)
+    project_data = dbf.json_read_file(file_path)
+    if project_data is None:
+        print("Error creating project data file.")
+        return None
+    print("Created new project data file at path: " + file_path)
+    return project_data
 
 
 

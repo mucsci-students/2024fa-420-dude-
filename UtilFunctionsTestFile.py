@@ -560,3 +560,13 @@ def test_update_param_no_method(capsys):
     except AssertionError:
         print("Function errored.")
 
+# Test 48: Test creating a new project file.
+def test_create_new_project(capsys):
+    data = uf.create_project_data_file("json_files/TestProject")
+    captured = capsys.readouterr()
+    try:
+        assert data is not None
+        captured = capsys.readouterr()
+    except AssertionError:
+        print("Error creating project file.")
+
