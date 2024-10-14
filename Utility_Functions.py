@@ -15,7 +15,7 @@ def add_class(project_data, class_name):
         "fields": [],
         "methods": []
     }
-
+    print("Added class " + class_name)
     return dbf.json_add_class(project_data, class_data)
 
 # Function to add a relationship to the project data.
@@ -45,6 +45,7 @@ def add_relationship(project_data, source, dest, rel_type):
         "type": rel_type
     }
 
+    print("Created relationship between " +  source  + " and " + dest + " with type " + rel_type)
     return dbf.json_add_relationship(project_data, rel_data)
 
 # Function to add a field to a class in the project data.
@@ -62,7 +63,7 @@ def add_field(project_data, class_name, field_name):
     field_data = {
         "name": field_name
     }
-
+    print("Added field " + field_name + " to class " + class_name + ".")
     return dbf.json_add_field(project_data, class_name, field_data)
 
 # Function to add a method to a class in the project data.
@@ -81,7 +82,9 @@ def add_method(project_data, class_name, method_name, params):
         "name": method_name,
         "params": params
     }
-
+    print("Added parameters [", end="")
+    print(*params, sep=", ", end="")
+    print("] to method " + method_name + " for class " + class_name + ".")
     return dbf.json_add_method(project_data, class_name, method_data)
 
 # Function to add a parameter to a method in the project data.
@@ -116,6 +119,7 @@ def delete_class(project_data, class_name):
         print("Class does not exist.")
         return project_data
 
+    print("Removed class " + class_name)
     return dbf.json_delete_class(project_data, class_name)
 
 # Function to delete a relationship from the project data.
@@ -129,7 +133,7 @@ def delete_relationship(project_data, source, dest):
     if rel_data is None:
         print("Relationship does not exist.")
         return project_data
-
+    print("Removed relationship between class " + source + " and " + dest)
     return dbf.json_delete_relationship(project_data, source, dest)
 
 # Function to delete a field from a class in the project data.
@@ -156,6 +160,7 @@ def delete_method(project_data, class_name, method_name):
         print("Method does not exist.")
         return project_data
 
+    print("Removed method " + method_name + " from class " + class_name)
     return dbf.json_delete_method(project_data, class_name, method_name)
 
 # Function to delete a parameter from a method in the project data.
@@ -184,6 +189,7 @@ def update_class_name(project_data, old_name, new_name):
         print("Class does not exist.")
         return project_data
 
+    print("Changed class " + old_name + " to " + new_name)
     return dbf.json_rename_class(project_data, old_name, new_name)
 
 # Function to rename a field in a class in the project data.

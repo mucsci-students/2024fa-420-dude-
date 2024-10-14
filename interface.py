@@ -3,6 +3,8 @@
 
 #pyunit for testing
 
+#TODO:add param function
+
 from DBFunctions import json_get_classes, json_get_relationships, json_get_class, json_read_file, json_write_file
 from Utility_Functions import *
 
@@ -16,10 +18,10 @@ options = '''Commmands:
         - Rename [Class] with [New Name] 
     mkrel [Type] [Class 1] [Class 2] : 
         - Create a new relationship between [Class 1] and [Class 2]
-        - Type must be of Aggregation or Composition
+        - Type must be of Aggregation, Composition, Inheritance, or Realization
     rmrel [Class 1] [Class 2] : 
         - Delete a relationship between [Class 1] and [Class 2]
-        - Type must be of Aggregation or Composition
+        - Type must be of Aggregation, Composition, Inheritance, or Realization
     mkfld [Class] :
         - Adds fields to the specified [Class]
     rmfld [Class] [Name] :
@@ -88,55 +90,41 @@ while command[0] != "exit":
         case "mkcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 project_data = add_class(project_data, command[1])
-                print("Added class " + command[1])
         case "rmcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 project_data = delete_class(project_data, command[1])
-                print("Removed class " + command[1])
-                # Currently printing regardless of whether or not the class exist
         case "chngcls":
             if correct_amount_of_inputs_warning(command, 3) is True:
                 project_data = update_class_name(project_data, command[1], command[2])
-                print("Changed class " + command[1] + " to " + command[2])
         case "mkrel":
             if correct_amount_of_inputs_warning(command, 4) is True:
                 type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
                 if command[1] in type_list:
                     project_data = add_relationship(project_data, command[2], command[3], command[1])
-                    print("Created relationship between " +  command[1] + " and " + command[2] + " with type " + command[3])
                 else :
                     print("Type must be one of: Aggregation, Composition, Inheritance, Realization")
         case "rmrel":
             if correct_amount_of_inputs_warning(command, 3) is True:
                 project_data = delete_relationship(project_data, command[1], command[2])
-                print("Removed relationship between class " + command[1] + " and " + command[2])
         case "mkfld":
-            #TODO: 
             if correct_amount_of_inputs_warning(command, 2) is True:
                 print("Provide a field, type \"done\" when finished.")
                 field = input("AddField: ")
-                field_list = []
                 while field.lower() != "done":
                     if field == "":
                         while field == "":
                             print("Must provide a field name")
                             field = input("AddField: ")
                     add_field(project_data, command[1], field)
-                    field_list.append(field)
                     field = input("AddField: ")
-                print("Added fields [", end="")
-                print(*field_list, sep=", ", end="")
-                print("]")
         case "rmfld":
             if correct_amount_of_inputs_warning(command, 3):
                 project_data = delete_field(project_data, command[1], command[2])
-                print("Removed field " + command[2] + " from class " + command[1])
         case "mkmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 print("Provide parameter, type \"done\" when finished.")
                 parameter =  input("AddParam: ")
                 parameter_list = []
-                #Can fix this by do while
                 while parameter != "done":
                     if parameter == "":
                         while field == "":
@@ -148,7 +136,6 @@ while command[0] != "exit":
         case "rmmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 delete_method(project_data, command[1], command[2])
-                print("Removed method " + command[2] + " from class " + command[1])
         case "save":
             json_write_file(file_path, project_data)
             print("Project Saved")
