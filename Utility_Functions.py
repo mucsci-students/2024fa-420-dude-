@@ -277,6 +277,14 @@ def display_relationship(project_data, source, dest):
 
 # Function to create a new project data file.
 def create_project_data_file(file_path):
+    preexisting_data = dbf.json_read_file(file_path)
+    if preexisting_data is not None:
+        print("File already exists at path: " + file_path)
+        return preexisting_data
+    # Check that it is .json file
+    if file_path[-5:] != ".json":
+        print("Invalid file type. Please use a .json file.")
+        return None
     project_data = {
         "classes": [],
         "relationships": []
