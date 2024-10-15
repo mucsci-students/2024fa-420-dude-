@@ -8,7 +8,8 @@ A project consist of classes which have fields and parameters as well as relatio
 
 In the CLI a Class will be structured like the following:
     ```
-    Class Name: Tire
+    Class Name: 
+    Tire
     Fields:
     diameter
     psi
