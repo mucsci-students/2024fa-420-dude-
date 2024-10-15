@@ -1,5 +1,5 @@
-import DBFunctions
-import Utility_Functions
+import DBFunctions as dbf
+import Utility_Functions as uf
 import sys
 import random
 from PyQt5.QtWidgets import (
@@ -43,6 +43,9 @@ class ClassBox(QGraphicsRectItem):
     def remove_relationship(self, relationship):
         self.relationships.remove(relationship)
 
+    def update_attributes_display(self):
+        self.attr_text.setPlainText(self.format_attributes())
+
 # Lines made when you create a relationship.
 class RelationshipLine(QGraphicsLineItem):
     def __init__(self, class_box_a, class_box_b):
@@ -80,11 +83,33 @@ class UMLScene(QGraphicsScene):
         super(UMLScene, self).__init__()
         self.setSceneRect(0, 0, 800, 600)
 
-    def add_class_box(self, position=None):
+    def add_class_box(self, project_data, position=None):
         dialog = ClassDialog()
         if dialog.exec_():
             name = dialog.get_class_name()
             attributes = dialog.get_attributes()
+            any_fields = True
+            any_methods = True
+            try:
+                fields = attributes.split("\n")[0].split(":")[1].split(", ")
+            except IndexError:
+                any_fields = False
+            try:
+                methods = attributes.split("\n")[2].split(":")[1].split("\n")
+            except IndexError:
+                any_methods = False
+            project_data = uf.add_class(project_data, name)
+            if any_fields:
+                if fields[0] != ' None':
+                    for field in fields:
+                        project_data = uf.add_field(project_data, name, field)
+            if any_methods:
+                if methods[0] != ' None':
+                    for method in methods:
+                        method_name = method.split("(")[0]
+                        parameters = method.split("(")[1].split(")")[0].split(", ")
+                        project_data = uf.add_method(project_data, name, method_name, parameters)
+                    
 
             class_box = ClassBox(name, attributes)
 
@@ -93,6 +118,7 @@ class UMLScene(QGraphicsScene):
 
             class_box.setPos(position)
             self.addItem(class_box)
+            return project_data
 
     # Handles finding a random spaw position for a new box to make sure of no overlapings.
     def find_non_overlapping_position(self, class_box):
@@ -297,49 +323,89 @@ class ClassDialog(QDialog):
         attributes_text = "Attributes:\n" + "Field: " + fields_text + "\n" + methods_text
         self.attributes_display.setText(attributes_text)
 
-    def on_edit_method_parameters(self):
+    def on_edit_method_parameters(self, project_data, scene):
+        original_project_data = project_data
         # Get class name
         class_name, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Class Name", "Enter the class name:")
         if not ok1 or not class_name:
-            return  # User canceled or provided no class name
+            return original_project_data # User canceled or provided no class name
 
         # Get method name
         method_name, ok2 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Method Name", "Enter the method name:")
         if not ok2 or not method_name:
-            return  # User canceled or provided no method name
+            return original_project_data # User canceled or provided no method name
 
         
         # Search for the class box by class name in backend.
-        class_box = next((box for box in UMLScene.items if isinstance(box, ClassBox) and box.name == class_name), None)
+        class_box = dbf.json_get_class(project_data, class_name)
 
         if class_box is None:
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
-            return
+            return original_project_data
 
         # Find the method in the class box's attributes (methods)
-        method_found = None
-        for method in class_box.methods_list:
-            if method.startswith(method_name + "("):  # Match the method by its name
-                method_found = method
-                break
+        method_found = dbf.json_get_method(project_data, class_name, method_name)
 
         if method_found is None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' not found in class '{class_name}'.")
-            return
+            return original_project_data
 
         # Existing parameters
-        existing_parameters = method_found.split('(')[1][:-1]  # Extract parameters within parentheses
+        existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+        formatted_existing_parameters = ""
+        for param in existing_parameters:
+            print(param)
+            formatted_existing_parameters += param["name"] + ", "
+            project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
+        if len(formatted_existing_parameters) > 0:
+            existing_parameters = formatted_existing_parameters[:-2]
+        else:
+            existing_parameters = "None"
         QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
 
         # Let user edit the parameters
         new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
         if not ok3:
-            return  # User canceled
+            return original_project_data # User canceled
 
         # Update the method with the new parameters
-        class_box.methods_list.remove(method_found)
-        class_box.methods_list.append(f"{method_name}({new_parameters})")
-        class_box.update_attributes_display()
+        if new_parameters:
+            for param in new_parameters.split(","):
+                param = param.strip()
+                if param:
+                    project_data = uf.add_param(project_data, class_name, method_name, param)
+
+        # Update the class box's attributes display
+        scene_box = None
+        for item in scene.items():
+            if isinstance(item, ClassBox) and item.name == class_name:
+                scene_box = item
+                break
+        fields = dbf.json_get_fields(project_data, class_name)
+        methods = dbf.json_get_methods(project_data, class_name)
+        attributes = "Fields: "
+        if fields is not None:
+            for field in fields:
+                attributes += field["name"] + ", "
+            attributes = attributes[:-2] + "\nMethods:\n"
+        else:
+            attributes += "None\nMethods:\n"
+        if methods is not None:
+            for method in methods:
+                params = dbf.json_get_parameters(project_data, class_name, method["name"])
+                parameters = ""
+                for param in params:
+                    parameters += param["name"] + ", "
+                if len(parameters) > 0:
+                    parameters = parameters[:-2]
+                attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+        else:
+            attributes += "None"
+        print(attributes)
+        scene_box.attributes = attributes
+        scene_box.update_attributes_display()
+
+        return project_data
 
 
 
@@ -370,6 +436,24 @@ class ClassDialog(QDialog):
      # Returns the list of fields
     def get_fields(self):
         return self.fields_list  
+    
+    def on_save(self, project_data):
+        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
+        if not ok1 or not file_path:
+            return project_data # User canceled or provided no class name
+        dbf.json_write_file(file_path, project_data)
+
+    def on_load(self, project_data):
+        save = QMessageBox.question(self if isinstance(self, QWidget) else None, "Save", "Would you like to save before loading?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        if save == QMessageBox.Cancel:
+            return None
+        if save == QMessageBox.Yes:
+            ClassDialog.on_save(self, project_data)
+        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
+        if not ok1 or not file_path:
+            return None # User canceled or provided no class name
+        project_data = dbf.json_read_file(file_path)
+        return project_data
 
 
 # Dialog for creating a relationship.
@@ -411,6 +495,11 @@ class UMLApp(QMainWindow):
     def __init__(self):
         super(UMLApp, self).__init__()
 
+        self.project_data = {
+            "classes": [],
+            "relationships": []
+        }
+
         self.scene = UMLScene()
         self.view = UMLGraphicsView(self.scene)
 
@@ -436,7 +525,7 @@ class UMLApp(QMainWindow):
         self.layout.addWidget(self.rename_button)
 
         self.edit_method_button = QPushButton("Edit Method Parameters")
-        self.edit_method_button.clicked.connect(ClassDialog.on_edit_method_parameters)
+        self.edit_method_button.clicked.connect(self.on_edit_method_parameters)
         self.layout.addWidget(self.edit_method_button)
 
         self.create_relationship_button = QPushButton("Create Relationship")
@@ -457,11 +546,15 @@ class UMLApp(QMainWindow):
         self.setGeometry(100, 100, 900, 600)
 
     def on_create_class(self):
-        self.scene.add_class_box()
+        self.project_data = self.scene.add_class_box(self.project_data)
+        print(self.project_data)
 
     def on_delete_class(self):
         # Gets the selected item in the scene
         selected_items = self.scene.selectedItems()
+        class_name = selected_items[0].name
+        self.project_data = uf.delete_class(self.project_data, class_name)
+        print(self.project_data)
 
         if not selected_items:
             QMessageBox.warning(self, "Warning", "Please select a class to delete.")
@@ -497,11 +590,18 @@ class UMLApp(QMainWindow):
                 new_name, ok = QInputDialog.getText(self, "Rename Class", "Enter new class name:", text=current_name)
             
                 if ok and new_name:  # Ensure the dialog was not cancelled and the new name is not empty
+                    self.project_data = uf.update_class_name(self.project_data, current_name, new_name)
+                    print(self.project_data)
+
                     # Update the class box's name
                     item.name = new_name
                 
                     # Update the displayed text in the graphics scene
                     item.text.setPlainText(new_name)
+
+    def on_edit_method_parameters(self):
+        self.project_data = ClassDialog.on_edit_method_parameters(self, self.project_data, self.scene)
+        print(self.project_data)
 
 
     def on_create_relationship(self):
@@ -525,12 +625,65 @@ class UMLApp(QMainWindow):
             if class_box_a and class_box_b:
                 relationship = RelationshipLine(class_box_a, class_box_b)
                 self.scene.addItem(relationship)
+                self.project_data = uf.add_relationship(self.project_data, class_a_name, class_b_name, relationship_dialog.get_type())
+                print(self.project_data)
 
     def on_save(self):
-        '''Add code to save to json file'''
+        self.project_data = ClassDialog.on_save(self, self.project_data)
 
     def on_load(self):
-        '''Add code to load from json file'''
+        data = ClassDialog.on_load(self, self.project_data)
+        if data is None:
+            return
+        self.scene.clear()
+        self.project_data = data
+        classes = dbf.json_get_classes(self.project_data)
+        for class_ in classes:
+            name = class_["name"]
+            fields = dbf.json_get_fields(self.project_data, name)
+            methods = dbf.json_get_methods(self.project_data, name)
+            attributes = "Fields: "
+            if fields is not None:
+                for field in fields:
+                    attributes += field["name"] + ", "
+                attributes = attributes[:-2] + "\nMethods:\n"
+            else:
+                attributes += "None\nMethods:\n"
+            if methods is not None:
+                for method in methods:
+                    params = dbf.json_get_parameters(self.project_data, name, method["name"])
+                    parameters = ""
+                    for param in params:
+                        parameters += param["name"] + ", "
+                    if len(parameters) > 0:
+                        parameters = parameters[:-2]
+                    attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+            else:
+                attributes += "None"
+            class_box = ClassBox(name, attributes)
+            position = self.scene.find_non_overlapping_position(class_box)
+            class_box.setPos(position)
+            self.scene.addItem(class_box)
+
+            # Add relationships
+            relationships = dbf.json_get_relationships(self.project_data)
+            class_boxes = []
+            for item in self.scene.items():
+                if isinstance(item, ClassBox):
+                    class_boxes.append(item)
+            for relationship in relationships:
+                class_box_a = None
+                class_box_b = None
+                for class_box in class_boxes:
+                    if class_box.name == relationship["source"]:
+                        class_box_a = class_box
+                    if class_box.name == relationship["destination"]:
+                        class_box_b = class_box
+                if class_box_a and class_box_b:
+                    relationship_line = RelationshipLine(class_box_a, class_box_b)
+                    self.scene.addItem(relationship_line)
+
+               
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

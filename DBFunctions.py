@@ -201,9 +201,6 @@ def json_get_parameter(data, class_name, method_name, parameter_name):
 
 # Function to write to a JSON file
 def json_write_file(file_path, data):
-    if json_file_exists(file_path) == False:
-        print("File does not exist. Please make sure the file path is correct.")
-        return None
     with open(file_path, "w") as file:
         json.dump(data, file, indent=4)
 

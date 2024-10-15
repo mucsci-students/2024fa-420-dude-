@@ -178,10 +178,9 @@ def delete_param(project_data, class_name, method_name, param_name):
         return project_data
     param_data = dbf.json_get_parameter(project_data, class_name, method_name, param_name)
     if param_data is None:
-        print("Method does not exist or class does not exist.")
+        print("Parameter does not exist.")
         return project_data
-    print("Parameter does not exist.")
-    return project_data
+    return dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
 
 ############### All update functions. ####################
 
