@@ -71,10 +71,24 @@ def get_file(file_path):
         return get_file(file_path)
     return project_data
 
+def create_or_load_file() :
+    print("Would you like to create or load a project?")
+    user_input = input("Type \"load\" to open a project or \"create\" to make a new one: ")
+    if user_input.lower() == "load":
+        file_path = input("Please enter the file you wish to use: ")
+        project_data = get_file(file_path)
+        return project_data
+    elif user_input.lower() == "create":
+        file_path = input("Please enter the file you wish to use: ")
+        project_data = create_project_data_file(file_path)
+        return project_data
+    else:
+        return create_or_load_file()
+
+
 ##################  Main Execution Section  ##################
 
-file_path = input("Please enter the file you wish to use: ")
-project_data = get_file(file_path)
+project_data = create_or_load_file()
 print("Enter a command, \nUse \"help\" for information")
 
 # Prompts the user for input
@@ -156,8 +170,7 @@ while command[0] != "exit":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 display_class(project_data, command[1])
         case "lsrel":
-            relationship = json_get_relationships(project_data)
-            print(relationship)
+            display_all_relationships(project_data)
         case "help":
             print(options)
         case " ":
