@@ -246,7 +246,6 @@ def display_class(project_data, class_name):
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    print("\nClass Data:\n")
     print("Class Name: " + class_data["name"])
     print("Fields:")
     for field in class_data["fields"]:
@@ -262,7 +261,16 @@ def display_class(project_data, class_name):
             param_string += ")"
         print(method["name"] + param_string + "\n")
     return project_data
-    
+
+# Displays all classes
+def display_all_classes(project_data):
+    if "classes" not in project_data or not project_data["classes"]:
+        print("No classes available.")
+        return project_data
+    print()
+    for class_data in project_data["classes"]:
+        display_class(project_data, class_data["name"])  # Use the existing display_class function
+
 # Function to display a relationship in the project data.
 def display_relationship(project_data, source, dest):
     rel_data = dbf.json_get_relationship(project_data, source, dest)
@@ -275,6 +283,17 @@ def display_relationship(project_data, source, dest):
     print("Type: " + rel_data["type"] + "\n")
     return project_data
 
+# Function to display all relationships in the project data.
+def display_all_relationships(project_data):
+    if "relationships" not in project_data or not project_data["relationships"]:
+        print("No relationships available.")
+        return project_data
+
+    print("\nAll Relationships Data:\n")
+    for rel_data in project_data["relationships"]:
+        display_relationship(project_data, rel_data["source"], rel_data["destination"])  # Use the existing display_relationship function
+
+    return project_data
 
 ############### Create file function. ####################
 
