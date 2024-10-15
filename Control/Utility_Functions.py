@@ -1,5 +1,4 @@
-import DBFunctions as dbf
-
+from Model import DBFunctions as dbf
 
 ############### All add functions. ####################
 

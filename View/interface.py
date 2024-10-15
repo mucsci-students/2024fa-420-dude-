@@ -1,12 +1,17 @@
 # This file controls the CLI.
-#maybe use argpars
+import sys
+from pathlib import Path
 
-#pyunit for testing
+# Add the project root to sys.path dynamically
+project_root = Path(__file__).resolve().parent.parent
+print(project_root)
+sys.path.append(str(project_root))
+
+# Now import Utility_Functions from the Control package
+from Control import Utility_Functions as uf
+from Model import DBFunctions as db
 
 #TODO:add param function
-
-from DBFunctions import json_get_classes, json_get_relationships, json_get_class, json_read_file, json_write_file
-from Utility_Functions import *
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -62,7 +67,7 @@ def correct_amount_of_inputs_warning(command, number_required) -> bool:
 # Returns the project data for the given file_path
 def get_file(file_path):
     try :
-        project_data = json_read_file(file_path)
+        project_data = db.json_read_file(file_path)
         if project_data is None:
             raise FileNotFoundError
     except :
@@ -80,7 +85,7 @@ def create_or_load_file() :
         return project_data
     elif user_input.lower() == "create":
         file_path = input("Please enter the file you wish to use: ")
-        project_data = create_project_data_file(file_path)
+        project_data = uf.create_project_data_file(file_path)
         return project_data
     else:
         return create_or_load_file()
@@ -103,23 +108,23 @@ while command[0] != "exit":
     match command[0]:
         case "mkcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                project_data = add_class(project_data, command[1])
+                project_data = uf.add_class(project_data, command[1])
         case "rmcls":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                project_data = delete_class(project_data, command[1])
+                project_data = uf.delete_class(project_data, command[1])
         case "chngcls":
             if correct_amount_of_inputs_warning(command, 3) is True:
-                project_data = update_class_name(project_data, command[1], command[2])
+                project_data = uf.update_class_name(project_data, command[1], command[2])
         case "mkrel":
             if correct_amount_of_inputs_warning(command, 4) is True:
                 type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
                 if command[1] in type_list:
-                    project_data = add_relationship(project_data, command[2], command[3], command[1])
+                    project_data = uf.add_relationship(project_data, command[2], command[3], command[1])
                 else :
                     print("Type must be one of: Aggregation, Composition, Inheritance, Realization")
         case "rmrel":
             if correct_amount_of_inputs_warning(command, 3) is True:
-                project_data = delete_relationship(project_data, command[1], command[2])
+                project_data = uf.delete_relationship(project_data, command[1], command[2])
         case "mkfld":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 print("Provide a field, type \"done\" when finished.")
@@ -129,11 +134,11 @@ while command[0] != "exit":
                         while field == "":
                             print("Must provide a field name")
                             field = input("AddField: ")
-                    add_field(project_data, command[1], field)
+                    uf.add_field(project_data, command[1], field)
                     field = input("AddField: ")
         case "rmfld":
             if correct_amount_of_inputs_warning(command, 3):
-                project_data = delete_field(project_data, command[1], command[2])
+                project_data = uf.delete_field(project_data, command[1], command[2])
         case "mkmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 print("Provide parameter, type \"done\" when finished.")
@@ -146,12 +151,12 @@ while command[0] != "exit":
                             parameter = input("AddField: ")
                     parameter_list.append(parameter)
                     parameter = input("AddParam: ")
-                add_method(project_data, command[1], command[2], parameter_list)
+                uf.add_method(project_data, command[1], command[2], parameter_list)
         case "rmmthd":
             if correct_amount_of_inputs_warning(command, 3):
-                delete_method(project_data, command[1], command[2])
+                uf.delete_method(project_data, command[1], command[2])
         case "save":
-            json_write_file(file_path, project_data)
+            db.json_write_file(file_path, project_data)
             print("Project Saved")
         case "load":
             if correct_amount_of_inputs_warning(command, 2) is True:
@@ -161,16 +166,16 @@ while command[0] != "exit":
                         check_save = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
                 # save the file
                 if check_save == "y" or check_save == "yes":
-                    json_write_file(file_path, project_data)
+                    db.json_write_file(file_path, project_data)
                 # Loads the new file
                 project_data = check_file_path(command[1]) 
         case "lscls":
-            display_all_classes(project_data)
+            uf.display_all_classes(project_data)
         case "clsinfo":
             if correct_amount_of_inputs_warning(command, 2) is True:
-                display_class(project_data, command[1])
+                uf.display_class(project_data, command[1])
         case "lsrel":
-            display_all_relationships(project_data)
+            uf.display_all_relationships(project_data)
         case "help":
             print(options)
         case " ":
@@ -189,6 +194,6 @@ user_input = input("Would you like to save? (N/y): ").lower()
 while user_input != "n" and user_input != "no" and user_input != "y" and user_input != "yes":
     user_input = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
 if user_input == "y" or user_input == "yes":
-    json_write_file(file_path, project_data)
+    db.json_write_file(file_path, project_data)
     print(file_path + " project saved")
 exit(0)
