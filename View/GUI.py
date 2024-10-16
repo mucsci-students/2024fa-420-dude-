@@ -724,22 +724,15 @@ class UMLApp(QMainWindow):
         if class_data is None:
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
             return project_data
-
-        # Add the new field to the class
-        if 'fields' not in class_data:
-            class_data['fields'] = []
     
         # Check if the field already exists
-        if any(field['name'] == field_name for field in class_data['fields']):
+        if dbf.json_get_field(project_data, class_name, field_name) is not None:
             QMessageBox.warning(self, "Warning", f"Field '{field_name}' already exists in class '{class_name}'.")
             return project_data
 
-        # Add the field
-        new_field = {'name': field_name}
-        class_data['fields'].append(new_field)
 
         # Update the project data with the modified class
-        project_data = dbf.json_add_field(project_data, class_name, field_name)
+        project_data = uf.add_field(project_data, class_name, field_name)
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
@@ -816,14 +809,14 @@ class UMLApp(QMainWindow):
         # Determine if the user selected field or method
         if msg_box.clickedButton() == field_button:
             # Call the rename field function
-            if dbf.json_rename_field(project_data, class_name, old_attribute_name, new_attribute_name):
+            if uf.update_field_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
                 QMessageBox.information(self, "Success", f"Field '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Field '{old_attribute_name}' not found in class '{class_name}'.")
 
         elif msg_box.clickedButton() == method_button:
             # Call the rename method function
-            if dbf.json_rename_method(project_data, class_name, old_attribute_name, new_attribute_name):
+            if uf.update_method_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
                 QMessageBox.information(self, "Success", f"Method '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{old_attribute_name}' not found in class '{class_name}'.")
