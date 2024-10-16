@@ -37,6 +37,12 @@ options = '''Commmands:
         - Creates methods until "done" is input
     rmmthd [Class] [Method Name] :
         - Removes parameters from [Method Name] from [Class]
+    mkpram [Class] [Method] [Parameter Name] :
+        - Adds [Parameter Name] to [Method] for [Class]
+    rmpram [Class] [Method] [Parameter Name] :
+        - Removes [Parameter Name] to [Method] for [Class]
+    chngpram [Class] [Method] [Old Param] [New Param] :
+        - Changes the name of [Old Param] to [New Param] for [Method] in [Class]
     save : 
         - Save the current project 
     load [Name] :
@@ -70,6 +76,7 @@ def correct_amount_of_inputs_warning(command, number_required) -> bool:
 def get_file(file_path):
     try :
         project_data = db.json_read_file(file_path)
+        r_file_path = file_path
         if project_data is None:
             raise FileNotFoundError
     except :
@@ -161,6 +168,15 @@ while command[0] != "exit":
         case "rmmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 uf.delete_method(project_data, command[1], command[2])
+        case "mkpram":
+            if correct_amount_of_inputs_warning(command, 4):
+                uf.add_param(project_data, command[1], command[2], command[3])
+        case "rmpram":
+            if correct_amount_of_inputs_warning(command, 4):
+                uf.delete_param(project_data, command[1], command[2], command[3])
+        case "chngpram":
+            if correct_amount_of_inputs_warning(command, 5):
+                uf.update_param_name(project_data, command[1], command[2], command[3], command[4])
         case "save":
             db.json_write_file(g_file_path, project_data)
             print("Project Saved")
