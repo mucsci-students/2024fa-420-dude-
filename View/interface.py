@@ -13,7 +13,7 @@ from Model import DBFunctions as db
 
 #TODO:add param function
 
-file_path = ""
+global g_file_path; g_file_path = ""
 
 # Command options printed if user inputs "help"
 options = '''Commmands:
@@ -74,9 +74,9 @@ def get_file(file_path):
             raise FileNotFoundError
     except :
         print(file_path + " not a valid file path.")
-        file_path = input("You must provide a project name (note this is a file path): ")
+        r_file_path = input("You must provide a project name (note this is a file path): ")
         return get_file(file_path)
-    return project_data
+    return (project_data, r_file_path)
 
 def create_or_load_file() :
     print("Would you like to create or load a project?")
@@ -88,7 +88,8 @@ def create_or_load_file() :
     elif user_input.lower() == "create":
         file_path = input("Please enter the file you wish to use: ")
         project_data = uf.create_project_data_file(file_path)
-        return project_data
+        r_file_path = file_path
+        return (project_data, r_file_path)
     else:
         return create_or_load_file()
 
@@ -96,7 +97,9 @@ def create_or_load_file() :
 ##################  Main Execution Section  ##################
 
 
-project_data = create_or_load_file()
+file_data = create_or_load_file()
+project_data = file_data[0]
+g_file_path = file_data[1]
 print("Enter a command, \nUse \"help\" for information")
 
 # Prompts the user for input
@@ -159,7 +162,7 @@ while command[0] != "exit":
             if correct_amount_of_inputs_warning(command, 3):
                 uf.delete_method(project_data, command[1], command[2])
         case "save":
-            db.json_write_file(file_path, project_data)
+            db.json_write_file(g_file_path, project_data)
             print("Project Saved")
         case "load":
             if correct_amount_of_inputs_warning(command, 2) is True:
@@ -169,9 +172,9 @@ while command[0] != "exit":
                         check_save = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
                 # save the file
                 if check_save == "y" or check_save == "yes":
-                    db.json_write_file(file_path, project_data)
+                    db.json_write_file(g_file_path, project_data)
                 # Loads the new file
-                project_data = check_file_path(command[1]) 
+                project_data = get_file(command[1]) 
         case "lscls":
             uf.display_all_classes(project_data)
         case "clsinfo":
@@ -197,6 +200,6 @@ user_input = input("Would you like to save? (N/y): ").lower()
 while user_input != "n" and user_input != "no" and user_input != "y" and user_input != "yes":
     user_input = input("Type \"y/yes\" to save or \"n/no\" to exit: ").lower()
 if user_input == "y" or user_input == "yes":
-    db.json_write_file(file_path, project_data)
-    print(file_path + " project saved")
+    db.json_write_file(g_file_path, project_data)
+    print(g_file_path + " project saved")
 exit(0)
