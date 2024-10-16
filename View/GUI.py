@@ -364,10 +364,11 @@ class ClassDialog(QDialog):
         # Existing parameters
         existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
         formatted_existing_parameters = ""
-        for param in existing_parameters:
-            print(param)
-            formatted_existing_parameters += param["name"] + ", "
-            project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
+        if existing_parameters is not None:
+            for param in existing_parameters:
+                print(param)
+                formatted_existing_parameters += param["name"] + ", "
+                project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
         if len(formatted_existing_parameters) > 0:
             existing_parameters = formatted_existing_parameters[:-2]
         else:
@@ -756,21 +757,12 @@ class UMLApp(QMainWindow):
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
             return project_data
 
-        # Add the new method to the class
-        if 'methods' not in class_data:
-            class_data['methods'] = []
-
         # Check if the method already exists
-        if any(method['name'] == method_name for method in class_data['methods']):
+        if dbf.json_get_method(project_data, class_name, method_name) is not None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' already exists in class '{class_name}'.")
             return project_data
 
-        # Add the method
-        new_method = {'name': method_name}
-        class_data['methods'].append(new_method)
-
-        # Update the project data with the modified class
-        project_data = dbf.json_add_method(project_data, class_name, new_method)
+        project_data = uf.add_method(project_data, class_name, method_name, [])
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
