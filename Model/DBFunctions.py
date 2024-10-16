@@ -53,7 +53,6 @@ def json_file_exists(file_path):
 # Function to get the JSON file to read from
 def json_read_file(file_path):
     if json_file_exists(file_path) == False:
-        print("File does not exist. Please make sure the file path is correct.")
         return None
     with open (file_path, "r") as file:
         data = json.load(file)
