@@ -1,5 +1,14 @@
-import DBFunctions as dbf
-import Utility_Functions as uf
+import sys
+from pathlib import Path
+
+# Add the project root to sys.path dynamically
+project_root = Path(__file__).resolve().parent.parent
+print(project_root)
+sys.path.append(str(project_root))
+
+# Now import Utility_Functions from the Control package
+from Control import Utility_Functions as uf
+from Model import DBFunctions as dbf
 import sys
 import random
 from PyQt5.QtWidgets import (
@@ -102,11 +111,13 @@ class UMLScene(QGraphicsScene):
             if any_fields:
                 if fields[0] != ' None':
                     for field in fields:
+                        field = field.strip()
                         project_data = uf.add_field(project_data, name, field)
             if any_methods:
                 if methods[0] != ' None':
                     for method in methods:
                         method_name = method.split("(")[0]
+                        method_name = method_name.strip()
                         parameters = method.split("(")[1].split(")")[0].split(", ")
                         project_data = uf.add_method(project_data, name, method_name, parameters)
                     
@@ -316,7 +327,7 @@ class ClassDialog(QDialog):
 
     def update_attributes_display(self):
         fields_text = ", ".join(self.fields_list)
-        methods_text = "\n".join(
+        methods_text = "".join(
             [f"Method: {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
         )
 
@@ -441,7 +452,7 @@ class ClassDialog(QDialog):
         file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
         if not ok1 or not file_path:
             return project_data # User canceled or provided no class name
-        dbf.json_write_file(file_path, project_data)
+        return dbf.json_write_file(file_path, project_data)
 
     def on_load(self, project_data):
         save = QMessageBox.question(self if isinstance(self, QWidget) else None, "Save", "Would you like to save before loading?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
@@ -491,6 +502,34 @@ class RelationshipDialog(QDialog):
     def get_type(self):
         return self.input_c.text()
 
+# Dialog for deleting a relationship.
+class DeleteRelationshipDialog(QDialog):
+    def __init__(self, class_boxes):
+        super(DeleteRelationshipDialog, self).__init__()
+
+        self.setWindowTitle("Delete Relationship")
+        self.layout = QVBoxLayout()
+
+        self.label_a = QLabel("Class A Name:")
+        self.input_a = QLineEdit()
+        self.layout.addWidget(self.label_a)
+        self.layout.addWidget(self.input_a)
+
+        self.label_b = QLabel("Class B Name:")
+        self.input_b = QLineEdit()
+        self.layout.addWidget(self.label_b)
+        self.layout.addWidget(self.input_b)
+
+        self.submit_button = QPushButton("Delete Relationship")
+        self.submit_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.submit_button)
+
+        self.setLayout(self.layout)
+
+    def get_selected_classes(self):
+        return self.input_a.text(), self.input_b.text()
+    
+
 class UMLApp(QMainWindow):
     def __init__(self):
         super(UMLApp, self).__init__()
@@ -524,6 +563,12 @@ class UMLApp(QMainWindow):
         self.rename_button.clicked.connect(self.on_rename_class)
         self.layout.addWidget(self.rename_button)
 
+        self.edit_attr_button = QPushButton("Edit Attributes")
+        self.edit_attr_button.clicked.connect(lambda: self.on_edit_attr(self.project_data, self.scene))
+
+        self.layout.addWidget(self.edit_attr_button)
+
+
         self.edit_method_button = QPushButton("Edit Method Parameters")
         self.edit_method_button.clicked.connect(self.on_edit_method_parameters)
         self.layout.addWidget(self.edit_method_button)
@@ -531,6 +576,10 @@ class UMLApp(QMainWindow):
         self.create_relationship_button = QPushButton("Create Relationship")
         self.create_relationship_button.clicked.connect(self.on_create_relationship)
         self.layout.addWidget(self.create_relationship_button)
+
+        self.delete_relationship_button = QPushButton("Delete Relationship")
+        self.delete_relationship_button.clicked.connect(self.on_delete_relationship)
+        self.layout.addWidget(self.delete_relationship_button)
 
         self.save_button = QPushButton("Save File")
         self.save_button.clicked.connect(self.on_save)
@@ -552,13 +601,13 @@ class UMLApp(QMainWindow):
     def on_delete_class(self):
         # Gets the selected item in the scene
         selected_items = self.scene.selectedItems()
-        class_name = selected_items[0].name
-        self.project_data = uf.delete_class(self.project_data, class_name)
         print(self.project_data)
 
         if not selected_items:
             QMessageBox.warning(self, "Warning", "Please select a class to delete.")
             return
+        class_name = selected_items[0].name
+        self.project_data = uf.delete_class(self.project_data, class_name)
 
         # Assume we are dealing with ClassBox instances
         for item in selected_items:
@@ -599,9 +648,234 @@ class UMLApp(QMainWindow):
                     # Update the displayed text in the graphics scene
                     item.text.setPlainText(new_name)
 
-    def on_edit_method_parameters(self):
-        self.project_data = ClassDialog.on_edit_method_parameters(self, self.project_data, self.scene)
-        print(self.project_data)
+    def on_edit_attr(self, project_data, scene):
+        # Prompt user to select an action: Add, Delete, Rename
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Edit Attribute")
+        msg_box.setText("Pick an Action:")
+        add_attr_button = msg_box.addButton("Add", QMessageBox.ActionRole)
+        delete_attr_button = msg_box.addButton("Delete", QMessageBox.ActionRole)
+        rename_attr_button = msg_box.addButton("Rename", QMessageBox.ActionRole)
+        msg_box.exec_()
+
+        # Prompt for the class name
+        class_name, ok1 = QInputDialog.getText(self, "Class Name", "Enter the class name:")
+        if not ok1 or not class_name:
+            return  # User canceled or didn't provide a class name
+
+        # Prompt for attribute type (Field or Method)
+        attr_type_msg = QMessageBox()
+        attr_type_msg.setWindowTitle("Select Attribute Type")
+        attr_type_msg.setText("Is this a Field or a Method?")
+        field_button = attr_type_msg.addButton("Field", QMessageBox.ActionRole)
+        method_button = attr_type_msg.addButton("Method", QMessageBox.ActionRole)
+        attr_type_msg.exec_()
+
+        attr_type = None
+        if attr_type_msg.clickedButton() == field_button:
+            attr_type = "Field"
+        elif attr_type_msg.clickedButton() == method_button:
+            attr_type = "Method"
+
+        if not attr_type:
+            return  # User canceled or didn't select an attribute type
+
+        if msg_box.clickedButton() == add_attr_button:
+            # Prompt for new attribute name
+            attribute_name, ok2 = QInputDialog.getText(self, "Attribute Name", f"Enter the {attr_type.lower()} name to add:")
+            if not ok2 or not attribute_name:
+                return  # User canceled or didn't provide an attribute name
+
+            # Add the attribute based on type
+            if attr_type == "Field":
+                project_data = self.add_field(project_data, class_name, attribute_name, scene, attr_type)
+            elif attr_type == "Method":
+                project_data = self.add_method(project_data, class_name, attribute_name, self.scene, attr_type)
+
+        elif msg_box.clickedButton() == delete_attr_button:
+            # Prompt for the attribute name to delete
+            attribute_name, ok2 = QInputDialog.getText(self, "Attribute Name", f"Enter the {attr_type.lower()} name to delete:")
+            if not ok2 or not attribute_name:
+                return  # User canceled or didn't provide an attribute name
+
+            # Delete the attribute based on type
+            self.delete_attribute(project_data, class_name, attribute_name, scene, attr_type)
+
+        elif msg_box.clickedButton() == rename_attr_button:
+            # Prompt for the attribute name to rename
+            attribute_name, ok2 = QInputDialog.getText(self, "Attribute Name", f"Enter the {attr_type.lower()} name to rename:")
+            if not ok2 or not attribute_name:
+                return  # User canceled or didn't provide an attribute name
+
+            # Prompt for the new name
+            new_name, ok3 = QInputDialog.getText(self, "New Attribute Name", f"Enter the new name for the {attr_type.lower()}:")
+            if not ok3 or not new_name:
+                return  # User canceled or didn't provide a new name
+
+            # Rename the attribute based on type
+            self.rename_attribute(project_data, class_name, attribute_name, new_name, scene, attr_type)
+
+
+    # Functions to handle attribute manipulation directly:
+    def add_field(self, project_data, class_name, field_name, scene, attr_type):
+        # Check if the class exists
+        class_data = dbf.json_get_class(project_data, class_name)
+        if class_data is None:
+            QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
+            return project_data
+
+        # Add the new field to the class
+        if 'fields' not in class_data:
+            class_data['fields'] = []
+    
+        # Check if the field already exists
+        if any(field['name'] == field_name for field in class_data['fields']):
+            QMessageBox.warning(self, "Warning", f"Field '{field_name}' already exists in class '{class_name}'.")
+            return project_data
+
+        # Add the field
+        new_field = {'name': field_name}
+        class_data['fields'].append(new_field)
+
+        # Update the project data with the modified class
+        project_data = dbf.json_add_field(project_data, class_name, field_name)
+
+        # Update the UI
+        self.update_scene_attributes(scene, project_data, class_name)
+
+        # Confirm the field was added
+        QMessageBox.information(self, "Success", f"Field '{field_name}' added to class '{class_name}'.")
+    
+        return project_data
+
+
+    def add_method(self, project_data, class_name, method_name, scene, attr_type):
+        # Check if the class exists
+        class_data = dbf.json_get_class(project_data, class_name)
+        if class_data is None:
+            QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
+            return project_data
+
+        # Add the new method to the class
+        if 'methods' not in class_data:
+            class_data['methods'] = []
+
+        # Check if the method already exists
+        if any(method['name'] == method_name for method in class_data['methods']):
+            QMessageBox.warning(self, "Warning", f"Method '{method_name}' already exists in class '{class_name}'.")
+            return project_data
+
+        # Add the method
+        new_method = {'name': method_name}
+        class_data['methods'].append(new_method)
+
+        # Update the project data with the modified class
+        project_data = dbf.json_add_method(project_data, class_name, new_method)
+
+        # Update the UI
+        self.update_scene_attributes(scene, project_data, class_name)
+
+        # Confirm the method was added
+        QMessageBox.information(self, "Success", f"Method '{method_name}' added to class '{class_name}'.")
+
+        return project_data
+
+    def delete_attribute(self, project_data, class_name, attribute_name, scene, attr_type):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Delete Attribute")
+        msg_box.setText("Is the attribute a field or a method?")
+        field_button = msg_box.addButton("Field", QMessageBox.ActionRole)
+        method_button = msg_box.addButton("Method", QMessageBox.ActionRole)
+        msg_box.exec_()
+
+        # Determine if the user selected field or method
+        if msg_box.clickedButton() == field_button:
+            # Call the delete field function
+            if dbf.json_delete_field(project_data, class_name, attribute_name):
+                QMessageBox.information(self, "Success", f"Field '{attribute_name}' deleted.")
+            else:
+                QMessageBox.warning(self, "Warning", f"Field '{attribute_name}' not found in class '{class_name}'.")
+
+        elif msg_box.clickedButton() == method_button:
+            # Call the delete method function
+            if dbf.json_delete_method(project_data, class_name, attribute_name):
+                QMessageBox.information(self, "Success", f"Method '{attribute_name}' deleted.")
+            else:
+                QMessageBox.warning(self, "Warning", f"Method '{attribute_name}' not found in class '{class_name}'.")
+
+        # Update the scene attributes display after deletion
+        self.update_scene_attributes(scene, project_data, class_name)
+
+
+    def rename_attribute(self, project_data, class_name, old_attribute_name, new_name, scene, attr_type):
+        # Prompt the user to specify if the attribute is a field or a method
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Rename Attribute")
+        msg_box.setText("Is the attribute a field or a method?")
+        field_button = msg_box.addButton("Field", QMessageBox.ActionRole)
+        method_button = msg_box.addButton("Method", QMessageBox.ActionRole)
+        msg_box.exec_()
+
+        # Get the new attribute name from the user
+        new_attribute_name, ok = QInputDialog.getText(self, "Rename Attribute", "Enter the new attribute name:")
+        if not ok or not new_attribute_name:
+            return  # User canceled or didn't provide a new name
+
+        # Determine if the user selected field or method
+        if msg_box.clickedButton() == field_button:
+            # Call the rename field function
+            if dbf.json_rename_field(project_data, class_name, old_attribute_name, new_attribute_name):
+                QMessageBox.information(self, "Success", f"Field '{old_attribute_name}' renamed to '{new_attribute_name}'.")
+            else:
+                QMessageBox.warning(self, "Warning", f"Field '{old_attribute_name}' not found in class '{class_name}'.")
+
+        elif msg_box.clickedButton() == method_button:
+            # Call the rename method function
+            if dbf.json_rename_method(project_data, class_name, old_attribute_name, new_attribute_name):
+                QMessageBox.information(self, "Success", f"Method '{old_attribute_name}' renamed to '{new_attribute_name}'.")
+            else:
+                QMessageBox.warning(self, "Warning", f"Method '{old_attribute_name}' not found in class '{class_name}'.")
+
+        # Update the scene attributes display after renaming
+        self.update_scene_attributes(scene, project_data, class_name)
+
+
+    def update_scene_attributes(self, scene, project_data, class_name):
+        # Get fields and methods from the project data
+        fields = dbf.json_get_fields(project_data, class_name)
+        methods = dbf.json_get_methods(project_data, class_name)
+
+        attributes = "Fields: "
+
+        # Ensure fields is a list or similar iterable
+        if isinstance(fields, list):
+            attributes += ", ".join([field['name'] for field in fields if isinstance(field, dict) and 'name' in field])
+        else:
+            attributes += "None"
+
+        attributes += "\nMethods:\n"
+
+        # Ensure methods is a list or similar iterable
+        if isinstance(methods, list):
+            for method in methods:
+                if isinstance(method, dict) and 'name' in method:
+                    params = dbf.json_get_parameters(project_data, class_name, method["name"])
+                    parameters = ", ".join([param['name'] for param in params if isinstance(param, dict) and 'name' in param]) if isinstance(params, list) else ""
+                    attributes += f"Method: {method['name']}({parameters})\n"
+        else:
+            attributes += "None"
+
+        # Update the class box's attributes in the scene
+        scene_box = None
+        for item in scene.items():
+            if isinstance(item, ClassBox) and item.name == class_name:
+                scene_box = item
+                break
+
+        if scene_box:
+            scene_box.attributes = attributes
+            scene_box.update_attributes_display()
+
 
 
     def on_create_relationship(self):
@@ -628,8 +902,65 @@ class UMLApp(QMainWindow):
                 self.project_data = uf.add_relationship(self.project_data, class_a_name, class_b_name, relationship_dialog.get_type())
                 print(self.project_data)
 
+    def on_edit_method_parameters(self):
+        self.project_data = ClassDialog.on_edit_method_parameters(self, self.project_data, self.scene)
+        print(self.project_data)
+
+    def on_delete_relationship(self):
+        class_boxes = [item for item in self.scene.items() if isinstance(item, ClassBox)]
+    
+        if len(class_boxes) < 2:
+            QMessageBox.warning(self, "Warning", "Need at least two classes to delete a relationship.")
+            return
+
+        # Open the relationship dialog to select classes
+        relationship_dialog = DeleteRelationshipDialog(class_boxes)
+        if relationship_dialog.exec_():
+            class_a_name, class_b_name = relationship_dialog.get_selected_classes()
+        
+            # Ensure both class names are provided
+            if not class_a_name or not class_b_name:
+                QMessageBox.warning(self, "Warning", "Please enter both class names.")
+                return
+
+            # Find the class boxes associated with the selected names
+            class_box_a = next((box for box in class_boxes if box.name == class_a_name), None)
+            class_box_b = next((box for box in class_boxes if box.name == class_b_name), None)
+
+            if not class_box_a or not class_box_b:
+                QMessageBox.warning(self, "Warning", "Could not find the specified classes.")
+                return
+        
+              # Get relationship data from project_data (JSON)
+        relationship_data = None
+        if dbf.json_get_relationship(self.project_data, class_a_name, class_b_name):
+            relationship_data = dbf.json_get_relationship(self.project_data, class_a_name, class_b_name)
+        elif dbf.json_get_relationship(self.project_data, class_b_name, class_a_name):
+            relationship_data = dbf.json_get_relationship(self.project_data, class_b_name, class_a_name)
+
+        if relationship_data:
+            # Find the actual QGraphicsItem (RelationshipLine) in the scene corresponding to the relationship data
+            relationship_item = next(
+                (item for item in self.scene.items() if isinstance(item, RelationshipLine) and
+                 item.class_box_a.name == class_a_name and item.class_box_b.name == class_b_name), 
+                None
+            )
+
+            if relationship_item:
+                # Remove the relationship from the scene
+                self.scene.removeItem(relationship_item)
+                # Remove the relationship references from both class boxes
+                class_box_a.remove_relationship(relationship_item)
+                class_box_b.remove_relationship(relationship_item)
+                print(f"Relationship between {class_a_name} and {class_b_name} deleted.")
+            else:
+                QMessageBox.warning(self, "Warning", "Could not find the relationship in the scene.")
+        else:
+            QMessageBox.warning(self, "Warning", "No relationship found between the selected classes.")
+
+
     def on_save(self):
-        self.project_data = ClassDialog.on_save(self, self.project_data)
+        return ClassDialog.on_save(self, self.project_data)
 
     def on_load(self):
         data = ClassDialog.on_load(self, self.project_data)
