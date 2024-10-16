@@ -13,6 +13,8 @@ from Model import DBFunctions as db
 
 #TODO:add param function
 
+file_path = ""
+
 # Command options printed if user inputs "help"
 options = '''Commmands:
     mkcls [Name] : 
@@ -92,6 +94,7 @@ def create_or_load_file() :
 
 
 ##################  Main Execution Section  ##################
+
 
 project_data = create_or_load_file()
 print("Enter a command, \nUse \"help\" for information")

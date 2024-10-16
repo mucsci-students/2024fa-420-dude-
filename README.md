@@ -22,3 +22,6 @@ In the CLI a Class will be structured like the following:
     Destination: Car
     Type: Composition
     ```
+
+### Testing 
+In order to run the testing functions you must use pytest in each of the directories. Pytest can be installed with pip/pip3(on linux) pytest. These test files refer to the sprint format. These test file modify and/or create new files so make sure these changes are reversed before re-running the test files.

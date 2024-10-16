@@ -1,8 +1,8 @@
-import Utility_Functions as uf
-import DBFunctions as dbf
+from Control import Utility_Functions as uf
+from Model import DBFunctions as dbf
 
 # The project data to pass around
-project_data = dbf.json_read_file("json_files/TinyDBTestFile.json")
+project_data = dbf.json_read_file("sprint2_format.json")
 print("Project Data: ", project_data)
 
 ########## All Add Tests ##########
@@ -562,7 +562,7 @@ def test_update_param_no_method(capsys):
 
 # Test 48: Test creating a new project file.
 def test_create_new_project(capsys):
-    data = uf.create_project_data_file("json_files/TestProject.json")
+    data = uf.create_project_data_file("TestProject.json")
     captured = capsys.readouterr()
     try:
         assert data is not None
@@ -572,8 +572,8 @@ def test_create_new_project(capsys):
 
 # Test 49: Test creating a new project with a name that already exists
 def test_create_existing_project(capsys):
-    uf.create_project_data_file("json_files/TestProject2.json")
-    data = uf.create_project_data_file("json_files/TestProject2.json")
+    uf.create_project_data_file("TestProject2.json")
+    data = uf.create_project_data_file("TestProject2.json")
     captured = capsys.readouterr()
     try:
         assert data is not None
@@ -583,7 +583,7 @@ def test_create_existing_project(capsys):
 
 # Test 50: Test creating a project where .json is not at the end of the filepath
 def test_create_invalid_project(capsys):
-    data = uf.create_project_data_file("json_files/TestProject")
+    data = uf.create_project_data_file("TestProject")
     captured = capsys.readouterr()
     try:
         assert data is None
