@@ -336,56 +336,65 @@ class ClassDialog(QDialog):
 
     def on_edit_method_parameters(self, project_data, scene):
         original_project_data = project_data
+
         # Get class name
         class_name, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Class Name", "Enter the class name:")
         if not ok1 or not class_name:
-            return original_project_data # User canceled or provided no class name
+            return original_project_data  # User canceled or provided no class name
 
         # Get method name
         method_name, ok2 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Method Name", "Enter the method name:")
         if not ok2 or not method_name:
-            return original_project_data # User canceled or provided no method name
+            return original_project_data  # User canceled or provided no method name
 
-        
-        # Search for the class box by class name in backend.
+        # Search for the class in backend
         class_box = dbf.json_get_class(project_data, class_name)
-
         if class_box is None:
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
             return original_project_data
 
-        # Find the method in the class box's attributes (methods)
+        # Find the method in the class
         method_found = dbf.json_get_method(project_data, class_name, method_name)
-
         if method_found is None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' not found in class '{class_name}'.")
             return original_project_data
 
-        # Existing parameters
+        # Get existing parameters for the method
         existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
-        formatted_existing_parameters = ""
-        if existing_parameters is not None:
-            for param in existing_parameters:
-                formatted_existing_parameters += param["name"] + ", "
-            project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
-            for param in existing_parameters:
-                project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
-        if len(formatted_existing_parameters) > 0:
-            existing_parameters = formatted_existing_parameters[:-2]
-        else:
+
+        if existing_parameters is None or len(existing_parameters) == 0:
             existing_parameters = "None"
-        QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
-        # Let user edit the parameters
-        new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
+        else:
+            # Display the existing parameters to the user
+            formatted_existing_parameters = ", ".join([param["name"] for param in existing_parameters])
+            QMessageBox.information(self, "Info", f"Existing parameters: {formatted_existing_parameters}")
+            
+            # Collect all parameter names to be deleted
+            parameters_to_delete = [param["name"] for param in existing_parameters]
+
+            # Delete all parameters in a separate step
+            for param_name in parameters_to_delete:
+                project_data = uf.delete_param(project_data, class_name, method_name, param_name)
+
+        # After clearing the parameters, **re-fetch the parameters to ensure correctness**
+        existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+        print(f"Parameters after deletion: {existing_parameters}")  # Debugging to ensure all are deleted
+
+        # Ask the user for new parameters
+        new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=formatted_existing_parameters)
         if not ok3:
-            return original_project_data # User canceled
+            return original_project_data  # User canceled
 
-
-        # Update the method with the new parameters
-        if new_parameters is not None:
+        # Add the new parameters
+        if new_parameters:
             for param in new_parameters.split(","):
-                param = param.strip()
-                project_data = uf.add_param(project_data, class_name, method_name, param)
+                param = param.strip()  # Remove any leading/trailing spaces
+                if param:  # Add only non-empty parameters
+                    project_data = uf.add_param(project_data, class_name, method_name, param)
+
+        # **Re-fetch the method parameters after adding new ones**
+        updated_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+        print(f"Updated parameters after addition: {updated_parameters}")  # Debugging to ensure new parameters are added correctly
 
         # Update the class box's attributes display
         scene_box = None
@@ -393,31 +402,30 @@ class ClassDialog(QDialog):
             if isinstance(item, ClassBox) and item.name == class_name:
                 scene_box = item
                 break
+
         fields = dbf.json_get_fields(project_data, class_name)
         methods = dbf.json_get_methods(project_data, class_name)
         attributes = "Fields: "
-        if fields is not None:
-            for field in fields:
-                attributes += field["name"] + ", "
-            attributes = attributes[:-2] + "\nMethods:\n"
+        
+        if fields:
+            attributes += ", ".join([field["name"] for field in fields]) + "\nMethods:\n"
         else:
             attributes += "None\nMethods:\n"
-        if methods is not None:
+        
+        if methods:
             for method in methods:
                 params = dbf.json_get_parameters(project_data, class_name, method["name"])
-                parameters = ""
-                for param in params:
-                    parameters += param["name"] + ", "
-                if len(parameters) > 0:
-                    parameters = parameters[:-2]
-                attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+                parameters = ", ".join([param["name"] for param in params]) if params else ""
+                attributes += f"Method: {method['name']}({parameters})\n"
         else:
             attributes += "None"
+
         print(attributes)
         scene_box.attributes = attributes
         scene_box.update_attributes_display()
 
         return project_data
+
 
 
 
