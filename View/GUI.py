@@ -363,6 +363,14 @@ class ClassDialog(QDialog):
         existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
 
         if existing_parameters is None or len(existing_parameters) == 0:
+        formatted_existing_parameters = ""
+        if existing_parameters is not None:
+            for param in existing_parameters:
+                formatted_existing_parameters += param["name"] + ", "
+            dbf.json_delete_all_parameters(project_data, class_name, method_name)
+        if len(formatted_existing_parameters) > 0:
+            existing_parameters = formatted_existing_parameters[:-2]
+        else:
             existing_parameters = "None"
         else:
             # Display the existing parameters to the user
@@ -382,11 +390,19 @@ class ClassDialog(QDialog):
 
         # Ask the user for new parameters
         new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=formatted_existing_parameters)
+        print("Existing parameters: " + str(existing_parameters))
+        print(dbf.json_get_parameters(project_data, class_name, method_name))
+        QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
+        # Let user edit the parameters
+        new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
         if not ok3:
             return original_project_data  # User canceled
 
         # Add the new parameters
         if new_parameters:
+        # Update the method with the new parameters
+        if new_parameters is not None:
+            print("New parameters: " + str(new_parameters))
             for param in new_parameters.split(","):
                 param = param.strip()  # Remove any leading/trailing spaces
                 if param:  # Add only non-empty parameters

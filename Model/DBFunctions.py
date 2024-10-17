@@ -617,6 +617,37 @@ def json_delete_parameter(data, class_name, method_name, parameter_name):
     data["classes"] = all_classes
     return data
 
+# Function to remove all parameters from a method in the JSON file
+def json_delete_all_parameters(data, class_name, method_name):
+    # Get all classes from JSON file
+    all_classes = json_get_classes(data)
+    if all_classes is None:
+        print("Error getting class data.")
+        print(json_format)
+        return None
+    # Check if class format is correct
+    class_data = json_get_class(data, class_name)
+    if class_data is None:
+        print("Error getting class data.")
+        print(json_format)
+        return None
+    # Check if method format is correct
+    methods = json_get_methods(data, class_name)
+    if methods is None:
+        print("Error getting method data.")
+        print(json_format)
+        return None
+    # Check if parameter format is correct
+    for m in methods:
+        if m["name"] == method_name:
+            m["params"] = []
+    class_data["methods"] = methods
+    for c in all_classes:
+        if c["name"] == class_name:
+            c = class_data
+    data["classes"] = all_classes
+    return data
+
     
         
     
