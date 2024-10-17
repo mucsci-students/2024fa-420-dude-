@@ -366,26 +366,26 @@ class ClassDialog(QDialog):
         formatted_existing_parameters = ""
         if existing_parameters is not None:
             for param in existing_parameters:
-                print(param)
                 formatted_existing_parameters += param["name"] + ", "
+            project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
+            for param in existing_parameters:
                 project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
         if len(formatted_existing_parameters) > 0:
             existing_parameters = formatted_existing_parameters[:-2]
         else:
             existing_parameters = "None"
         QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
-
         # Let user edit the parameters
         new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
         if not ok3:
             return original_project_data # User canceled
 
+
         # Update the method with the new parameters
-        if new_parameters:
+        if new_parameters is not None:
             for param in new_parameters.split(","):
                 param = param.strip()
-                if param:
-                    project_data = uf.add_param(project_data, class_name, method_name, param)
+                project_data = uf.add_param(project_data, class_name, method_name, param)
 
         # Update the class box's attributes display
         scene_box = None
