@@ -110,6 +110,7 @@ def add_param(project_data, class_name, method_name, param_name):
         "name": param_name
     }
 
+    print("Added parameter " + param_name + " for method " + method_name + " in class " + class_name + ".")
     return dbf.json_add_parameter(project_data, class_name, method_name, param_data)
 
 
@@ -180,6 +181,7 @@ def delete_param(project_data, class_name, method_name, param_name):
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
+    print("Removed parameter " + param_name + " for method " + method_name + " in class " + class_name + ".")
     return dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
 
 ############### All update functions. ####################
@@ -204,7 +206,7 @@ def update_field_name(project_data, class_name, old_name, new_name):
     if field_data is None:
         print("Field does not exist.")
         return project_data
-
+    print("Changed field " + old_name + " to " + new_name + " for class " + class_name)
     return dbf.json_rename_field(project_data, class_name, old_name, new_name)
 
 # Function to rename a method in a class in the project data.
@@ -218,6 +220,7 @@ def update_method_name(project_data, class_name, old_name, new_name):
         print("Method does not exist.")
         return project_data
 
+    print("Changed method " + old_name + " to " + new_name + " for class " + class_name)
     return dbf.json_rename_method(project_data, class_name, old_name, new_name)
 
 # Function to rename a parameter in a method in the project data.
@@ -234,6 +237,8 @@ def update_param_name(project_data, class_name, method_name, old_name, new_name)
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
+
+    print("Changed parameter " + old_name + " to " + new_name + " for class " + class_name + " in method " + method_name + ".")
     return dbf.json_rename_parameter(project_data, class_name, method_name, old_name, new_name)
     
 

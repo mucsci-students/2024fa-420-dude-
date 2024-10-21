@@ -33,10 +33,14 @@ options = '''Commmands:
         - Adds fields to the specified [Class]
     rmfld [Class] [Name] :
         - Removes the field [Name] from the class with name [Class]
+    chngfld [Class] [Old Field] [New Field] :
+        - Changes the name of [Old Field] to [New Field] in [Class]
     mkmthd [Class] [Method Name] :
         - Creates methods until "done" is input
     rmmthd [Class] [Method Name] :
         - Removes parameters from [Method Name] from [Class]
+    chngmthd [Class] [Old Method] [New Method]:
+        - Changes the name of [Old Method] to [New Method] in [Class]
     mkpram [Class] [Method] [Parameter Name] :
         - Adds [Parameter Name] to [Method] for [Class]
     rmpram [Class] [Method] [Parameter Name] :
@@ -152,6 +156,9 @@ while command[0] != "exit":
         case "rmfld":
             if correct_amount_of_inputs_warning(command, 3):
                 project_data = uf.delete_field(project_data, command[1], command[2])
+        case "chngfld":
+            if correct_amount_of_inputs_warning(command, 4):
+                project_data = uf.update_field_name(project_data, command[1], command[2], command[3])
         case "mkmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 print("Provide parameter, type \"done\" when finished.")
@@ -168,6 +175,9 @@ while command[0] != "exit":
         case "rmmthd":
             if correct_amount_of_inputs_warning(command, 3):
                 uf.delete_method(project_data, command[1], command[2])
+        case "chngmthd":
+            if correct_amount_of_inputs_warning(command, 4):
+                uf.update_method_name(project_data, command[1], command[2], command[3])
         case "mkpram":
             if correct_amount_of_inputs_warning(command, 4):
                 uf.add_param(project_data, command[1], command[2], command[3])
