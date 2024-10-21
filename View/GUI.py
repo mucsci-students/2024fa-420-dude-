@@ -364,27 +364,29 @@ class ClassDialog(QDialog):
         # Existing parameters
         existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
         formatted_existing_parameters = ""
-        for param in existing_parameters:
-            print(param)
-            formatted_existing_parameters += param["name"] + ", "
-            project_data = uf.delete_param(project_data, class_name, method_name, param["name"])
+        if existing_parameters is not None:
+            for param in existing_parameters:
+                formatted_existing_parameters += param["name"] + ", "
+            dbf.json_delete_all_parameters(project_data, class_name, method_name)
         if len(formatted_existing_parameters) > 0:
             existing_parameters = formatted_existing_parameters[:-2]
         else:
             existing_parameters = "None"
+        print("Existing parameters: " + str(existing_parameters))
+        print(dbf.json_get_parameters(project_data, class_name, method_name))
         QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
-
         # Let user edit the parameters
         new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
         if not ok3:
             return original_project_data # User canceled
 
+
         # Update the method with the new parameters
-        if new_parameters:
+        if new_parameters is not None:
+            print("New parameters: " + str(new_parameters))
             for param in new_parameters.split(","):
                 param = param.strip()
-                if param:
-                    project_data = uf.add_param(project_data, class_name, method_name, param)
+                project_data = uf.add_param(project_data, class_name, method_name, param)
 
         # Update the class box's attributes display
         scene_box = None
@@ -723,22 +725,15 @@ class UMLApp(QMainWindow):
         if class_data is None:
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
             return project_data
-
-        # Add the new field to the class
-        if 'fields' not in class_data:
-            class_data['fields'] = []
     
         # Check if the field already exists
-        if any(field['name'] == field_name for field in class_data['fields']):
+        if dbf.json_get_field(project_data, class_name, field_name) is not None:
             QMessageBox.warning(self, "Warning", f"Field '{field_name}' already exists in class '{class_name}'.")
             return project_data
 
-        # Add the field
-        new_field = {'name': field_name}
-        class_data['fields'].append(new_field)
 
         # Update the project data with the modified class
-        project_data = dbf.json_add_field(project_data, class_name, field_name)
+        project_data = uf.add_field(project_data, class_name, field_name)
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
@@ -756,21 +751,12 @@ class UMLApp(QMainWindow):
             QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
             return project_data
 
-        # Add the new method to the class
-        if 'methods' not in class_data:
-            class_data['methods'] = []
-
         # Check if the method already exists
-        if any(method['name'] == method_name for method in class_data['methods']):
+        if dbf.json_get_method(project_data, class_name, method_name) is not None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' already exists in class '{class_name}'.")
             return project_data
 
-        # Add the method
-        new_method = {'name': method_name}
-        class_data['methods'].append(new_method)
-
-        # Update the project data with the modified class
-        project_data = dbf.json_add_method(project_data, class_name, new_method)
+        project_data = uf.add_method(project_data, class_name, method_name, [])
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
@@ -824,14 +810,14 @@ class UMLApp(QMainWindow):
         # Determine if the user selected field or method
         if msg_box.clickedButton() == field_button:
             # Call the rename field function
-            if dbf.json_rename_field(project_data, class_name, old_attribute_name, new_attribute_name):
+            if uf.update_field_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
                 QMessageBox.information(self, "Success", f"Field '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Field '{old_attribute_name}' not found in class '{class_name}'.")
 
         elif msg_box.clickedButton() == method_button:
             # Call the rename method function
-            if dbf.json_rename_method(project_data, class_name, old_attribute_name, new_attribute_name):
+            if uf.update_method_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
                 QMessageBox.information(self, "Success", f"Method '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{old_attribute_name}' not found in class '{class_name}'.")
