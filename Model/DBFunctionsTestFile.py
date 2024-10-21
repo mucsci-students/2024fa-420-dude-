@@ -63,7 +63,7 @@ def test_json_get_methods(capsys):
 # Test adding a class to the JSON file
 def test_json_add_class(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
-    class_data = { "name": "Engine", "fields": [], "methods": [] }
+    class_data = { "name": "Engine", "fields": [], "methods": [], "position": { "x": 0, "y": 0 } }
     project_data = dbf.json_add_class(project_data, class_data)
     assert dbf.json_get_class(project_data, "Engine") is not None
     captured = capsys.readouterr()
@@ -72,7 +72,7 @@ def test_json_add_class(capsys):
 # Test adding a relationship to the JSON file
 def test_json_add_relationship(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
-    relationship_data = { "source": "Tire", "destination": "Car" }
+    relationship_data = { "source": "Tire", "destination": "Car", "type": "Aggregation" }
     project_data = dbf.json_add_relationship(project_data, relationship_data)
     assert dbf.json_get_relationship(project_data, "Tire", "Car") is not None
     captured = capsys.readouterr()
@@ -92,9 +92,9 @@ def test_json_add_field(capsys):
 def test_json_add_method(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
     class_name = "Engine"
-    method_data = { "name": "start", "return_type": "void" }
+    method_data = { "name": "start", "return_type": "void", "params": [] }
     project_data = dbf.json_add_method(project_data, class_name, method_data)
-    assert dbf.json_get_method(project_data, "Engine", "start") is not None
+    assert dbf.json_get_method(project_data, "Engine", "start", 1) is not None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
@@ -103,9 +103,9 @@ def test_json_add_parameter(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
     class_name = "Tire"
     method_name = "setPSI"
-    param_data = { "name": "currentPSI" }
-    project_data = dbf.json_add_parameter(project_data, class_name, method_name, param_data)
-    assert dbf.json_get_parameter(project_data, "Tire", "setPSI", "currentPSI") is not None
+    param_data = { "name": "currentPSI", "type": "int" }
+    project_data = dbf.json_add_parameter(project_data, class_name, method_name, 1, param_data)
+    assert dbf.json_get_parameter(project_data, "Tire", "setPSI", "currentPSI", "int", 1) is not None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
@@ -114,7 +114,7 @@ def test_json_get_parameters(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
     class_name = "Tire"
     method_name = "setPSI"
-    parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+    parameters = dbf.json_get_parameters(project_data, class_name, method_name, 1)
     assert parameters is not None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
@@ -146,8 +146,8 @@ def test_json_rename_method(capsys):
     class_name = "Motor"
     old_method_name = "start"
     new_method_name = "rev"
-    project_data = dbf.json_rename_method(project_data, class_name, old_method_name, new_method_name)
-    assert dbf.json_get_method(project_data, class_name, new_method_name) is not None
+    project_data = dbf.json_rename_method(project_data, class_name, old_method_name, new_method_name, 1)
+    assert dbf.json_get_method(project_data, class_name, new_method_name, 1) is not None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
@@ -158,8 +158,9 @@ def test_json_rename_parameter(capsys):
     method_name = "setPSI"
     old_param_name = "currentPSI"
     new_param_name = "nowPSI"
-    project_data = dbf.json_rename_parameter(project_data, class_name, method_name, old_param_name, new_param_name)
-    assert dbf.json_get_parameter(project_data, class_name, method_name, new_param_name) is not None
+    project_data = dbf.json_rename_parameter(project_data, class_name, method_name, 1, old_param_name, new_param_name)
+    print(project_data)
+    assert dbf.json_get_parameter(project_data, class_name, method_name, new_param_name, "int", 1) is not None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
@@ -168,9 +169,10 @@ def test_json_delete_parameter(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
     class_name = "Tire"
     method_name = "setPSI"
-    param_name = "nowPSI"
-    project_data = dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
-    assert dbf.json_get_parameter(project_data, class_name, method_name, param_name) is None
+    param_name = "newPSI"
+    project_data = dbf.json_delete_parameter(project_data, class_name, method_name, 1, param_name)
+    print(project_data)
+    assert dbf.json_get_parameter(project_data, class_name, method_name, param_name, "string", 1) is None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
@@ -179,8 +181,8 @@ def test_json_delete_method(capsys):
     project_data = dbf.json_read_file("sprint2_format.json")
     class_name = "Motor"
     method_name = "rev"
-    project_data = dbf.json_delete_method(project_data, class_name, method_name)
-    assert dbf.json_get_method(project_data, class_name, method_name) is None
+    project_data = dbf.json_delete_method(project_data, class_name, method_name, 1)
+    assert dbf.json_get_method(project_data, class_name, method_name, 1) is None
     captured = capsys.readouterr()
     dbf.json_write_file("sprint2_format.json", project_data)
 
