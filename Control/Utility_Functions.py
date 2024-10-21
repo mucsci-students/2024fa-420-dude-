@@ -100,10 +100,11 @@ def add_param(project_data, class_name, method_name, param_name):
         print("Method does not exist.")
         return project_data
     param_data = dbf.json_get_parameters(project_data, class_name, method_name)
-    for param in param_data:
-        if param["name"] == param_name:
-            print("Parameter already exists.")
-            return project_data
+    if param_data is not None:
+        for param in param_data:
+            if param["name"] == param_name:
+                print("Parameter already exists.")
+                return project_data
 
     param_data = {
         "name": param_name
