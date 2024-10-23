@@ -8,24 +8,26 @@ json_format = '''Please make sure data is formatted like so:
                             "name": "Class Name",
                             "fields": [
                                 {
-                                    { "name": "field1name" },
-                                    { "name": "field2name" }
+                                    { "name": "field1name", "type": "field1type" },
+                                    { "name": "field2name", "type": "field2type" }
                                 }
                             ],
                             "methods": [
                                 {
                                     { 
                                         "name": "method1name",
+                                        "return_type": "return_type",
                                         "parameters": [
-                                            { "name": "parameter1name" },
-                                            { "name": "parameter2name" }
+                                            { "name": "parameter1name", "type": "parameter1type" },
+                                            { "name": "parameter2name", "type": "parameter2type" }
                                         ] 
                                     },
                                     { 
                                         "name": "method2name",
+                                        "return_type": "return_type",
                                         "parameters": [
-                                            { "name": "parameter1name" },
-                                            { "name": "parameter2name" }
+                                            { "name": "parameter1name", "type": "parameter1type" },
+                                            { "name": "parameter2name", "type": "parameter2type" }
                                         ] 
                                     }
                                 }
