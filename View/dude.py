@@ -7,7 +7,7 @@ def run_gui():
     subprocess.run([sys.executable, 'GUI.py'])
 def run_cli():
     # Your CLI code goes here
-    subprocess.run([sys.executable, 'interface.py'])
+    subprocess.run([sys.executable, 'cli.py'])
 
 def main():
     parser = argparse.ArgumentParser(description="Run the program in GUI or CLI mode.")
