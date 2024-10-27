@@ -29,13 +29,17 @@ All unit and integration tests are run using the pytest python testing framework
 They can also be run simultaneously using the more broad TestFile.py that sits above the rest of the project filesystem. That program takes a command argument and runs both test files and displays corresponding output for each. It can be run using:
 ```
 Windows:
-        python TestFile.py --test
-   Linux:
-        python3 TestFile.py --test
+    python TestFile.py --test
+Linux:
+    python3 TestFile.py --test
 ```
 There is also a known bug where the database tests fail on the first run of the broad test file but work on every subsequent run.
 
 ### Requirements
 The only necessary libraries are the standard python json library which is usually included with initial python installation, and the pytest library which is used for all unit/integration tests. They can be installed using the following commands:
-```pip install json```
-```pip install pytest```
+```
+pip install json
+```
+```
+pip install pytest
+```
