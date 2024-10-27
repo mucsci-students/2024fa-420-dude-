@@ -27,10 +27,12 @@ In the CLI a Class will be structured like the following:
 All unit and integration tests are run using the pytest python testing framework. There are unit tests for the backend database functions in the Model folder and unit/integration tests for the API in the Control folder. The files can be run separately using:
 ```pytest <filename>```
 They can also be run simultaneously using the more broad TestFile.py that sits above the rest of the project filesystem. That program takes a command argument and runs both test files and displays corresponding output for each. It can be run using:
-```Windows:
+```
+Windows:
         python TestFile.py --test
-   Linix:
-        python3 TestFile.py --test```
+   Linux:
+        python3 TestFile.py --test
+```
 There is also a known bug where the database tests fail on the first run of the broad test file but work on every subsequent run.
 
 ### Requirements
