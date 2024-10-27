@@ -16,7 +16,8 @@ In the CLI a Class will be structured like the following:
     brand
     Methods:
     setPSI(new_psi)
-
+    ```
+    ```
     Relationship Data:
     Source: Tire
     Destination: Car
