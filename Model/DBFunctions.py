@@ -173,12 +173,13 @@ def json_get_method(data, class_name, method_name, count):
         print(json_format)
         return None
     methods = json_get_method_with_same_name(data, class_name, method_name)
-    temp = 0
+    temp = 1
     for m in methods:
-        if m["name"] == method_name:
-            temp += 1
-            if temp == count:
-                return m
+        print("Count: " + str(count) + ", Temp: " + str(temp))
+        if int(temp) == int(count):
+            print("Found method: " + m["name"])
+            return m
+        temp += 1
                     
     # print("Method not found. Method may not exist.")
     return None
@@ -191,18 +192,21 @@ def json_get_parameters(data, class_name, method_name, count):
         print(json_format)
         return None
     methods = json_get_method_with_same_name(data, class_name, method_name)
-    temp = 0
+    print("Methods: " + str(methods))
+    temp = 1
     for m in methods:
+        print("Count: " + str(count) + ", Temp: " + str(temp) + ", Method Name: " + m["name"])
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if str(temp) == str(count):
                 try:
                     parameters = m["params"]
+                    return parameters
                 except KeyError:
                     print("Parameters could not be found for method " + method_name + ".")
                     print(json_format)
                     return None
-                return parameters
+                
+        temp += 1
     
 
 # Function to get a specific parameter of a method
@@ -214,7 +218,7 @@ def json_get_parameter(data, class_name, method_name, parameter_name, parameter_
         return None
     for p in parameters:
         print(p)
-        if p["name"] == parameter_name and p["type"] == parameter_type:
+        if str(p["name"]) == str(parameter_name) and str(p["type"]) == str(parameter_type):
             return p
     print("Parameter not found. Parameter may not exist.")
     return None
@@ -333,11 +337,10 @@ def json_add_parameter(data, class_name, method_name, count, new_parameter_data)
         print("Error getting method data.")
         print(json_format)
         return None
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if str(temp) == str(count):
                 parameters = m["params"]
                 if parameters is None:
                     print("Error getting parameter data.")
@@ -346,6 +349,7 @@ def json_add_parameter(data, class_name, method_name, count, new_parameter_data)
                 # Add parameter to JSON file
                 parameters.append(new_parameter_data)
                 m["params"] = parameters
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
@@ -461,12 +465,12 @@ def json_rename_method(data, class_name, old_method_name, new_method_name, count
         print(json_format)
         return None
     # Rename method in JSON file
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == old_method_name:
-            temp += 1
-            if temp == count:
+            if int(temp) == int(count):
                 m["name"] = new_method_name
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
@@ -495,11 +499,10 @@ def json_rename_parameter(data, class_name, method_name, count, old_parameter_na
         print(json_format)
         return None
     # Check if parameter format is correct
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if int(temp) == int(count):
                 parameters = m["params"]
                 if parameters is None:
                     print("Error getting parameter data.")
@@ -510,6 +513,7 @@ def json_rename_parameter(data, class_name, method_name, count, old_parameter_na
                     if p["name"] == old_parameter_name:
                         p["name"] = new_parameter_name
                 m["params"] = parameters
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
@@ -619,12 +623,12 @@ def json_delete_method(data, class_name, method_name, count):
         print(json_format)
         return None
     # Remove method from JSON file\
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if int(temp) == int(count):
                 methods.remove(m)
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
@@ -653,11 +657,10 @@ def json_delete_parameter(data, class_name, method_name, count, parameter_name):
         print(json_format)
         return None
     # Check if parameter format is correct
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if int(temp) == int(count):
                 parameters = m["params"]
                 if parameters is None:
                     print("Error getting parameter data.")
@@ -668,6 +671,7 @@ def json_delete_parameter(data, class_name, method_name, count, parameter_name):
                     if p["name"] == parameter_name:
                         parameters.remove(p)
                 m["params"] = parameters
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
@@ -697,12 +701,12 @@ def json_delete_all_parameters(data, class_name, method_name, count):
         print(json_format)
         return None
     # Check if parameter format is correct
-    temp = 0
+    temp = 1
     for m in methods:
         if m["name"] == method_name:
-            temp += 1
-            if temp == count:
+            if int(temp) == int(count):
                 m["params"] = []
+            temp += 1
     class_data["methods"] = methods
     for c in all_classes:
         if c["name"] == class_name:
