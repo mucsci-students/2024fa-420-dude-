@@ -1,5 +1,6 @@
 # This file controls the CLI.
 import sys
+import copy
 from pathlib import Path
 
 # Add the project root to sys.path dynamically
@@ -35,16 +36,16 @@ options = '''Commmands:
     chfield [Class] [Old Field] [New Field] :
         - Changes the name of [Old Field] to [New Field] in [Class]
     mkmethod [Class] [Method Name] [Return Type] [Parameter 1] [Parameter 2] ... :
-        - Creates methods until "done" is input
+        - Creates methods with all parameters
     rmmethod [Class] [Method Name] :
-        - Removes parameters from [Method Name] from [Class]
+        - Removes the method with name [Method Name] from [Class]
     chmethod [Class] [Old Method] [New Method]:
         - Changes the name of [Old Method] to [New Method] in [Class]
     mkparameter [Class] [Method] [Parameter Name] [Type] :
         - Adds [Parameter Name] to [Method] for [Class]
-    rmparameter [Class] [Method] [Parameter Name] :
+    rmparameter [Class] [Method] [Parameter Name] [Type]:
         - Removes [Parameter Name] to [Method] for [Class]
-    chparameter [Class] [Method] [Old Param] [New Param] :
+    chparameter [Class] [Method] [Old Param] [New Param] [Type]:
         - Changes the name of [Old Param] to [New Param] for [Method] in [Class]
     save : 
         - Save the current project 
@@ -56,6 +57,10 @@ options = '''Commmands:
         - Provides information on the [Class] 
     lsrelationship:
         - List all relationships between classes
+    undo:
+        - Undo the last action
+    redo:
+        - Redo the last action
     help :
         - Displays this information
     exit :
@@ -111,6 +116,9 @@ file_data = create_or_load_file()
 project_data = file_data[0]
 g_file_path = file_data[1]
 print("Enter a command, \nUse \"help\" for information")
+undo_stack = []
+redo_stack = []
+undo_clicked = False
 
 # Prompts the user for input
 #   DUML stands for Dude UML
@@ -124,57 +132,196 @@ while command[0] != "exit":
     match command[0]:
         case "mkclass":
             if correct_amount_of_inputs_warning(command, 2) is True:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.add_class(project_data, command[1])
         case "rmclass":
             if correct_amount_of_inputs_warning(command, 2) is True:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_class(project_data, command[1])
         case "chclass":
             if correct_amount_of_inputs_warning(command, 3) is True:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.update_class_name(project_data, command[1], command[2])
         case "mkrel":
             if correct_amount_of_inputs_warning(command, 4) is True:
                 type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
                 if command[1] in type_list:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.add_relationship(project_data, command[2], command[3], command[1])
                 else :
                     print("Type must be one of: Aggregation, Composition, Inheritance, Realization")
         case "rmrel":
             if correct_amount_of_inputs_warning(command, 3) is True:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_relationship(project_data, command[1], command[2])
         case "mkfield":
             if correct_amount_of_inputs_warning(command, 4) is True:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 uf.add_field(project_data, command[1], command[2], command[3])
         case "rmfield":
             if correct_amount_of_inputs_warning(command, 3):
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_field(project_data, command[1], command[2])
         case "chfield":
             if correct_amount_of_inputs_warning(command, 4):
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.update_field_name(project_data, command[1], command[2], command[3])
         case "mkmethod":
             if len(command) < 4:
                 print("Incorrect number of arguments.\n\tUse \"help\" for information")
             else:
+                if (undo_clicked):
+                    undo_stack.clear()
+                    undo_clicked = False
+                undo_stack.append(copy.deepcopy(project_data))
                 uf.add_method(project_data, command[1], command[2], command[4:], command[3])
+                
         case "rmmethod":
-            if correct_amount_of_inputs_warning(command, 4):
-                method_to_delete = input("Which method would you liked to delete: ")
+            if correct_amount_of_inputs_warning(command, 3):
                 # Need to add a new function to display methods with a specific name.
-                uf.delete_method(project_data, command[1], command[2], method_to_delete) 
+                methods = db.json_get_method_with_same_name(project_data, command[1], command[2])
+                count = 1
+                for method in methods:
+                    parameters = method["params"]
+                    formatted_params = "("
+                    for param in parameters:
+                        formatted_params += param["name"] + ": " + param["type"] + ", "
+                    if len(parameters) > 0:
+                        formatted_params = formatted_params[:-2] + ")"
+                    else:
+                        formatted_params += ")"
+                    print(str(count) + ".) Method: " + method["name"] + formatted_params + " Return Type: " + method["return_type"])
+                    count += 1
+                number_to_delete = input("Which number method would you like to delete?")
+                if number_to_delete.isnumeric() and int(number_to_delete) <= count:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
+                    project_data = uf.delete_method(project_data, command[1], command[2], number_to_delete)
+                else:
+                    print("Invalid input number input.") 
         case "chmethod":
-            if correct_amount_of_inputs_warning(command, 5):
-                method_to_update = input("Which method would you liked to delete: ")
+            if correct_amount_of_inputs_warning(command, 4):
                 # Need to add a new function to display methods with a specific name.
-                uf.update_method_name(project_data, command[1], command[2], command[3], method_to_delete)
+                methods = db.json_get_method_with_same_name(project_data, command[1], command[2])
+                count = 1
+                for method in methods:
+                    parameters = method["params"]
+                    formatted_params = "("
+                    for param in parameters:
+                        formatted_params += param["name"] + ": " + param["type"] + ", "
+                    if len(parameters) > 0:
+                        formatted_params = formatted_params[:-2] + ")"
+                    else:
+                        formatted_params += ")"
+                    print(str(count) + ".) Method: " + method["name"] + formatted_params + " Return Type: " + method["return_type"])
+                    count += 1
+                number_to_change = input("Which number method would you like to rename?")
+                if number_to_change.isnumeric() and int(number_to_change) <= count:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
+                    project_data = uf.update_method_name(project_data, command[1], command[2], command[3], number_to_change)
+                else:
+                    print("Invalid input number input.")
         case "mkparameter":
             if correct_amount_of_inputs_warning(command, 5):
-                uf.add_param(project_data, command[1], command[2], command[3], command[4])
+                methods = db.json_get_method_with_same_name(project_data, command[1], command[2])
+                count = 1
+                for method in methods:
+                    parameters = method["params"]
+                    formatted_params = "("
+                    for param in parameters:
+                        formatted_params += param["name"] + ": " + param["type"] + ", "
+                    if len(parameters) > 0:
+                        formatted_params = formatted_params[:-2] + ")"
+                    else:
+                        formatted_params += ")"
+                    print(str(count) + ".) Method: " + method["name"] + formatted_params + " Return Type: " + method["return_type"])
+                    count += 1
+                number_to_change = input("Which number method would you like to add a parameter to?")
+                if number_to_change.isnumeric() and int(number_to_change) <= count:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
+                    project_data = uf.add_param(project_data, command[1], command[2], number_to_change, command[3], command[4])
+                else:
+                    print("Invalid input number input.")
         case "rmparameter":
-            if correct_amount_of_inputs_warning(command, 4):
-                parameter_to_delete = input("Which method would you like to delete the parameter from: ")
-                uf.delete_param(project_data, command[1], command[2], parameter_to_delete, command[3])
-        case "chparameter":
             if correct_amount_of_inputs_warning(command, 5):
-                uf.update_param_name(project_data, command[1], command[2], command[3], command[4])
+                methods = db.json_get_method_with_same_name(project_data, command[1], command[2])
+                count = 1
+                for method in methods:
+                    parameters = method["params"]
+                    formatted_params = "("
+                    for param in parameters:
+                        formatted_params += param["name"] + ": " + param["type"] + ", "
+                    if len(parameters) > 0:
+                        formatted_params = formatted_params[:-2] + ")"
+                    else:
+                        formatted_params += ")"
+                    print(str(count) + ".) Method: " + method["name"] + formatted_params + " Return Type: " + method["return_type"])
+                    count += 1
+                number_to_delete = input("Which number method would you like to remove the parameter from?")
+                if number_to_delete.isnumeric() and int(number_to_delete) <= count:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
+                    project_data = uf.delete_param(project_data, command[1], command[2], number_to_delete, command[3], command[4])
+                else:
+                    print("Invalid input number input.")
+        case "chparameter":
+            if correct_amount_of_inputs_warning(command, 6):
+                methods = db.json_get_method_with_same_name(project_data, command[1], command[2])
+                count = 1
+                for method in methods:
+                    parameters = method["params"]
+                    formatted_params = "("
+                    for param in parameters:
+                        formatted_params += param["name"] + ": " + param["type"] + ", "
+                    if len(parameters) > 0:
+                        formatted_params = formatted_params[:-2] + ")"
+                    else:
+                        formatted_params += ")"
+                    print(str(count) + ".) Method: " + method["name"] + formatted_params + " Return Type: " + method["return_type"])
+                    count += 1
+                number_to_change = input("Which number method would you like to change the parameter in?")
+                if number_to_change.isnumeric() and int(number_to_change) <= count:
+                    if (undo_clicked):
+                        undo_stack.clear()
+                        undo_clicked = False
+                    undo_stack.append(copy.deepcopy(project_data))
+                    project_data = uf.update_param_name(project_data, command[1], command[2], command[3], command[4], command[5], number_to_change)
+                else:
+                    print("Invalid input number input.")
         case "save":
             db.json_write_file(g_file_path, project_data)
             print("Project Saved")
@@ -196,6 +343,17 @@ while command[0] != "exit":
                 uf.display_class(project_data, command[1])
         case "lsrelationship":
             uf.display_all_relationships(project_data)
+        case "undo":
+            if len(undo_stack) > 0:
+                print("Undoing last action")
+                redo_stack.append(copy.deepcopy(project_data))
+                project_data = undo_stack.pop()
+                undo_clicked = True
+        case "redo":
+            if len(redo_stack) > 0:
+                print("Redoing last action")
+                undo_stack.append(copy.deepcopy(project_data))
+                project_data = redo_stack.pop()
         case "help":
             print(options)
         case " ":

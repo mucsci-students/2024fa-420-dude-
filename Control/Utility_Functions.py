@@ -174,7 +174,7 @@ def delete_method(project_data, class_name, method_name, count):
     return dbf.json_delete_method(project_data, class_name, method_name, count)
 
 # Function to delete a parameter from a method in the project data.
-def delete_param(project_data, class_name, method_name, count, param_name):
+def delete_param(project_data, class_name, method_name, count, param_name, param_type):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
@@ -183,7 +183,7 @@ def delete_param(project_data, class_name, method_name, count, param_name):
     if method_data is None:
         print("Method does not exist.")
         return project_data
-    param_data = dbf.json_get_parameter(project_data, class_name, method_name, count, param_name)
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, param_name, param_type, count)
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
@@ -230,7 +230,7 @@ def update_method_name(project_data, class_name, old_name, new_name, count):
     return dbf.json_rename_method(project_data, class_name, old_name, new_name, count)
 
 # Function to rename a parameter in a method in the project data.
-def update_param_name(project_data, class_name, method_name, old_name, new_name, count):
+def update_param_name(project_data, class_name, method_name, old_name, new_name, param_type, count):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
@@ -239,13 +239,13 @@ def update_param_name(project_data, class_name, method_name, old_name, new_name,
     if method_data is None:
         print("Method does not exist.")
         return project_data
-    param_data = dbf.json_get_parameter(project_data, class_name, method_name, old_name, count)
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, old_name, param_type, count)
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
 
     print("Changed parameter " + old_name + " to " + new_name + " for class " + class_name + " in method " + method_name + ".")
-    return dbf.json_rename_parameter(project_data, class_name, method_name, old_name, new_name, count)
+    return dbf.json_rename_parameter(project_data, class_name, method_name, count, old_name, new_name)
     
 
 ############### All display functions. ####################
@@ -259,17 +259,17 @@ def display_class(project_data, class_name):
     print("Class Name: " + class_data["name"])
     print("Fields:")
     for field in class_data["fields"]:
-        print(field["name"])
+        print(field["name"] + " : " + field["type"])
     print("Methods:")
     for method in class_data["methods"]:
         param_string = "("
         for param in method["params"]:
-            param_string += param["name"] + ", "
+            param_string += param["name"] + " : " + param["type"] + ", "
         if len(param_string) > 1:
             param_string = param_string[:-2] + ")"
         else:
             param_string += ")"
-        print(method["name"] + param_string + "\n")
+        print(method["name"] + param_string + " Return Type: " + method["return_type"] + "\n")
     return project_data
 
 # Displays all classes
