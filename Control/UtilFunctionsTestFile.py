@@ -167,8 +167,7 @@ def test_add_method_with_params(capsys):
     data = uf.add_method(project_data, "Car", "drive", [{ "name": "speed", "type": "int" }], "void")
     captured = capsys.readouterr()
     try:
-        assert dbf.json_get_method(data, "Car", "drive", [{ "name": "speed", "type": "int"}]) is not None
-        captured = capsys.readouterr()
+        assert dbf.json_get_method(data, "Car", "drive", 1) is not None
     except AssertionError:
         print("Method was not added.")
 
@@ -378,7 +377,7 @@ def test_delete_method_no_class(capsys):
 
 # Test 32: Delete a parameter from a method in the project data that does not exist.
 def test_delete_nonexisting_param(capsys):
-    data = uf.delete_param(project_data, "Truck", "drive", 1, "speed")
+    data = uf.delete_param(project_data, "Truck", "drive", 1, "speed", "int")
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "Car", "drive", "speed", "int", 1) is None
@@ -389,7 +388,7 @@ def test_delete_nonexisting_param(capsys):
 # Test 33: Delete a parameter from a method in the project data that exists.
 def test_delete_existing_param(capsys):
     data = uf.add_param(project_data, "Truck", "drive", 1, "speed", "int")
-    data = uf.delete_param(data, "Truck", "drive", 1, "speed")
+    data = uf.delete_param(data, "Truck", "drive", 1, "speed", "int")
     parameter = dbf.json_get_parameter(data, "Truck", "drive", "speed", "int", 1)
     captured = capsys.readouterr()
     try:
@@ -400,7 +399,7 @@ def test_delete_existing_param(capsys):
 
 # Test 34: Delete a parameter from a method in the project data that does not exist.
 def test_delete_param_no_class(capsys):
-    data = uf.delete_param(project_data, "None", "drive", 1, "speed")
+    data = uf.delete_param(project_data, "None", "drive", 1, "speed", "int")
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "None", "drive", "speed", "int", 1) is None
@@ -410,7 +409,7 @@ def test_delete_param_no_class(capsys):
 
 # Test 35: Delete a parameter from a method in the project data that does not exist.
 def test_delete_param_no_method(capsys):
-    data = uf.delete_param(project_data, "Truck", "None", 1, "speed")
+    data = uf.delete_param(project_data, "Truck", "None", 1, "speed", "int")
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "Truck", "None", "speed", "int", 1) is None
@@ -520,7 +519,7 @@ def test_update_method_no_class(capsys):
 
 # Test 44: Update a parameter in a method in the project data that does not exist.
 def test_update_nonexisting_param(capsys):
-    data = uf.update_param_name(project_data, "Truck", "drive", "None", "velocity", 1)
+    data = uf.update_param_name(project_data, "Truck", "drive", "None", "velocity", "int", 1)
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "Truck", "drive", "velocity", "int", 1) is None
@@ -531,7 +530,7 @@ def test_update_nonexisting_param(capsys):
 # Test 45: Update a parameter in a method in the project data that exists.
 def test_update_existing_param(capsys):
     data = uf.add_param(project_data, "Truck", "drive", 1, "speed", "int")
-    data = uf.update_param_name(data, "Truck", "drive", "speed", "velocity", 1)
+    data = uf.update_param_name(data, "Truck", "drive", "speed", "velocity", "int", 1)
     parameter = dbf.json_get_parameter(data, "Truck", "drive", "velocity", "int", 1)
     captured = capsys.readouterr()
     try:
@@ -542,7 +541,7 @@ def test_update_existing_param(capsys):
 
 # Test 46: Update a parameter in a method in the project data that does not exist.
 def test_update_param_no_class(capsys):
-    data = uf.update_param_name(project_data, "None", "drive", "speed", "velocity", 1)
+    data = uf.update_param_name(project_data, "None", "drive", "speed", "velocity", "int", 1)
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "None", "drive", "velocity", "int", 1) is None
@@ -552,7 +551,7 @@ def test_update_param_no_class(capsys):
 
 # Test 47: Update a parameter in a method in the project data that does not exist.
 def test_update_param_no_method(capsys):
-    data = uf.update_param_name(project_data, "Truck", "None", "speed", "velocity", 1)
+    data = uf.update_param_name(project_data, "Truck", "None", "speed", "velocity", "int", 1)
     captured = capsys.readouterr()
     try:
         assert dbf.json_get_parameter(data, "Truck", "None", "velocity", "int", 1) is None
