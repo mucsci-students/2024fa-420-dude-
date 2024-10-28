@@ -43,6 +43,10 @@ class ClassBox(QGraphicsRectItem):
         # Relationships will be stored here
         self.relationships = []
 
+        # Adjust size based on text content
+        self.adjust_size()
+
+
     def format_attributes(self):
         return "".join(self.attributes)
 
@@ -54,6 +58,18 @@ class ClassBox(QGraphicsRectItem):
 
     def update_attributes_display(self):
         self.attr_text.setPlainText(self.format_attributes())
+
+    def adjust_size(self):
+        # Get the bounding rectangles for the text and attribute text items
+        name_rect = self.text.boundingRect()
+        attr_rect = self.attr_text.boundingRect()
+
+        # Calculate width and height based on the text content
+        width = max(name_rect.width(), attr_rect.width()) + 20
+        height = name_rect.height() + attr_rect.height() + 30
+
+        # Update the rectangle of the ClassBox
+        self.setRect(0, 0, width, height)
 
 # Lines made when you create a relationship.
 class RelationshipLine(QGraphicsLineItem):
@@ -70,10 +86,23 @@ class RelationshipLine(QGraphicsLineItem):
 
     # Functionality for arealtionship line.
     def update_line(self):
-        start_point = self.class_box_a.rect().bottomLeft() + self.class_box_a.pos()
-        end_point = self.class_box_b.rect().topLeft() + self.class_box_b.pos()
+
+        # Ensure class_box_a is on the left and class_box_b is on the right
+        if self.class_box_a.pos().x() > self.class_box_b.pos().x():
+            self.class_box_a, self.class_box_b = self.class_box_b, self.class_box_a
+
+        # Middle right point of class_box_a
+        start_x = self.class_box_a.rect().right() + self.class_box_a.pos().x()
+        start_y = self.class_box_a.rect().center().y() + self.class_box_a.pos().y()
+        start_point = QPointF(start_x, start_y)
+
+        # Middle left point of class_box_b
+        end_x = self.class_box_b.rect().left() + self.class_box_b.pos().x()
+        end_y = self.class_box_b.rect().center().y() + self.class_box_b.pos().y()
+        end_point = QPointF(end_x, end_y)
 
         self.setLine(QLineF(start_point, end_point))
+
 
     def boundingRect(self):
         return QRectF(self.class_box_a.rect().bottomLeft() + self.class_box_a.pos(),
@@ -111,15 +140,20 @@ class UMLScene(QGraphicsScene):
             if any_fields:
                 if fields[0] != ' None':
                     for field in fields:
+                        parts = field.split(" ", 1)
+                        type = parts[0]
                         field = field.strip()
-                        project_data = uf.add_field(project_data, name, field)
+                        project_data = uf.add_field(project_data, name, field, type)
             if any_methods:
                 if methods[0] != ' None':
                     for method in methods:
+                        # Split by the first space to separate the return type from the rest
+                        parts = method.split(" ", 1)
+                        return_type = parts[0]  # First part is the return type
                         method_name = method.split("(")[0]
                         method_name = method_name.strip()
                         parameters = method.split("(")[1].split(")")[0].split(", ")
-                        project_data = uf.add_method(project_data, name, method_name, parameters)
+                        project_data = uf.add_method(project_data, name, method_name, parameters, return_type)
                     
 
             class_box = ClassBox(name, attributes)
@@ -208,6 +242,11 @@ class AddFieldDialog(QDialog):
         self.setWindowTitle("Add Field")
         self.layout = QVBoxLayout()
 
+        self.type_label = QLabel("Field Type:")
+        self.type_input = QLineEdit()
+        self.layout.addWidget(self.type_label)
+        self.layout.addWidget(self.type_input)
+
         self.name_label = QLabel("Field Name:")
         self.name_input = QLineEdit()
         self.layout.addWidget(self.name_label)
@@ -221,6 +260,9 @@ class AddFieldDialog(QDialog):
 
     def get_field_name(self):
         return self.name_input.text()
+    
+    def get_field_type(self):
+        return self.type_input.text()
 
 # Dialog to create a method.
 class AddMethodDialog(QDialog):
@@ -235,6 +277,11 @@ class AddMethodDialog(QDialog):
         self.name_input = QLineEdit()
         self.layout.addWidget(self.name_label)
         self.layout.addWidget(self.name_input)
+
+        self.type_label = QLabel("Method Return Type:")
+        self.type_input = QLineEdit()
+        self.layout.addWidget(self.type_label)
+        self.layout.addWidget(self.type_input)
 
         # Parameters (comma-separated)
         self.params_label = QLabel("Parameters (comma separated):")
@@ -256,8 +303,23 @@ class AddMethodDialog(QDialog):
     def get_method_name(self):
         return self.name_input.text()
 
-    def get_parameters(self):
-        return [param.strip() for param in self.params_input.text().split(",")]
+    def get_method_type(self):
+        return self.type_input.text()
+
+    def get_str_parameters(self):
+        params = []
+        for param in self.params_input.text().split(","):
+            params.append(param)
+        return params
+
+    def get_tuple_parameters(self):
+        params = []
+        for param in self.params_input.text().split(","):
+            param_parts = param.strip().split()  # Split by space and remove extra whitespace
+            if len(param_parts) == 2:  # Ensure there are exactly two parts (type and name)
+                param_type, param_name = param_parts
+                params.append(param_type, param_name)  # Store as a tuple (type, name)
+        return params
 
 
 # Dialog to create a class.
@@ -310,25 +372,27 @@ class ClassDialog(QDialog):
         field_dialog = AddFieldDialog()
         if field_dialog.exec_():
             field_name = field_dialog.get_field_name()
-            if field_name:
-                self.fields_list.append(field_name)
+            field_type = field_dialog.get_field_type()
+            full_field = field_type + " " +field_name
+            if full_field:
+                self.fields_list.append(full_field)
                 self.update_attributes_display()
 
-    def add_method(self, method_name=None, existing_parameters=None):
+    def add_method(self, method_name=None, return_type=None, existing_parameters=None):
         method_dialog = AddMethodDialog(existing_parameters=existing_parameters)
         if method_dialog.exec_():
             method_name = method_dialog.get_method_name()
-            parameters = method_dialog.get_parameters()
+            return_type = method_dialog.get_method_type()
+            parameters = method_dialog.get_str_parameters()
             if method_name:
-                param_list = ", ".join(parameters)
-                method = {"name": method_name, "parameters": parameters}
+                method = {"name": method_name, "type": return_type, "parameters": parameters}
                 self.methods_list.append(method)
                 self.update_attributes_display()
 
     def update_attributes_display(self):
         fields_text = ", ".join(self.fields_list)
         methods_text = "".join(
-            [f"Method: {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
+            [f"Method: {method['type']} {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
         )
 
         attributes_text = "Attributes:\n" + "Field: " + fields_text + "\n" + methods_text
@@ -411,7 +475,7 @@ class ClassDialog(QDialog):
                     parameters += param["name"] + ", "
                 if len(parameters) > 0:
                     parameters = parameters[:-2]
-                attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+                attributes += "Method: " + method["type"]+ method["name"] + "(" + parameters + ")\n"
         else:
             attributes += "None"
         print(attributes)
@@ -437,7 +501,7 @@ class ClassDialog(QDialog):
     def get_attributes(self):
         fields_text = ", ".join(self.fields_list) if self.fields_list else "None"
         methods_text = "\n".join(
-            [f"Method: {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
+            [f"Method: {method['type']} {method['name']}({', '.join(method['parameters'])})" for method in self.methods_list]
         ) if self.methods_list else "None"
         return f"Fields: {fields_text}\nMethods:\n{methods_text}"
 
@@ -733,7 +797,7 @@ class UMLApp(QMainWindow):
 
 
         # Update the project data with the modified class
-        project_data = uf.add_field(project_data, class_name, field_name)
+        project_data = uf.add_field(project_data, class_name, field_name, attr_type)
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
