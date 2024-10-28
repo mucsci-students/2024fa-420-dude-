@@ -62,7 +62,6 @@ def add_field(project_data, class_name, field_name, field_type):
         if field["name"] == field_name:
             print("Field already exists.")
             return project_data
-
     field_data = {
         "name": field_name,
         "type": field_type
