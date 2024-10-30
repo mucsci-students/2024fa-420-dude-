@@ -160,7 +160,11 @@ class UMLScene(QGraphicsScene):
 
             if not position:
                 position = self.find_non_overlapping_position(class_box)
-
+            pos = {
+                "x": position.x(),
+                "y": position.y(),
+            }
+            project_data = dbf.json_update_pos(project_data, name, pos)
             class_box.setPos(position)
             self.addItem(class_box)
             return project_data
@@ -382,7 +386,9 @@ class ClassDialog(QDialog):
         method_dialog = AddMethodDialog(existing_parameters=existing_parameters)
         if method_dialog.exec_():
             method_name = method_dialog.get_method_name()
+            print(method_name)
             return_type = method_dialog.get_method_type()
+            print(return_type)
             parameters = method_dialog.get_str_parameters()
             if method_name:
                 method = {"name": method_name, "type": return_type, "parameters": parameters}
@@ -419,7 +425,14 @@ class ClassDialog(QDialog):
             return original_project_data
 
         # Find the method in the class box's attributes (methods)
-        method_found = dbf.json_get_method(project_data, class_name, method_name)
+        method_found = dbf.json_get_method(project_data, class_name, method_name, 1)
+        mult_method = dbf.json_get_method_with_same_name(project_data, class_name, method_name)
+        if len(mult_method) > 0:
+            method_count, ok4 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Which Method", "Enter the method number:")
+            if not ok4 or not method_name:
+                return original_project_data # User canceled or provided no method count
+            method_found = dbf.json_get_method(project_data, class_name, method_name, method_count)
+
 
         if method_found is None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' not found in class '{class_name}'.")
@@ -809,18 +822,9 @@ class UMLApp(QMainWindow):
 
 
     def add_method(self, project_data, class_name, method_name, scene, attr_type):
-        # Check if the class exists
-        class_data = dbf.json_get_class(project_data, class_name)
-        if class_data is None:
-            QMessageBox.warning(self, "Warning", f"Class '{class_name}' not found.")
-            return project_data
-
-        # Check if the method already exists
-        if dbf.json_get_method(project_data, class_name, method_name) is not None:
-            QMessageBox.warning(self, "Warning", f"Method '{method_name}' already exists in class '{class_name}'.")
-            return project_data
-
-        project_data = uf.add_method(project_data, class_name, method_name, [])
+        print("Method name: " + method_name)
+        print("Return type:" + attr_type)
+        project_data = uf.add_method(project_data, class_name, method_name, [], attr_type)
 
         # Update the UI
         self.update_scene_attributes(scene, project_data, class_name)
@@ -847,8 +851,16 @@ class UMLApp(QMainWindow):
                 QMessageBox.warning(self, "Warning", f"Field '{attribute_name}' not found in class '{class_name}'.")
 
         elif msg_box.clickedButton() == method_button:
+            mult_method = dbf.json_get_method_with_same_name(project_data, class_name, attribute_name)
+            method_count = None
+            if len(mult_method) > 0:
+                method_count_str, ok = QInputDialog.getText(None, "Which Method", "Enter Method Count:")
+                if not ok:
+                    QMessageBox.warning(self, "Warning", " count not found.")
+                    return project_data
+                method_count = int(method_count_str)
             # Call the delete method function
-            if dbf.json_delete_method(project_data, class_name, attribute_name):
+            if dbf.json_delete_method(project_data, class_name, attribute_name, method_count):
                 QMessageBox.information(self, "Success", f"Method '{attribute_name}' deleted.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{attribute_name}' not found in class '{class_name}'.")
@@ -880,8 +892,16 @@ class UMLApp(QMainWindow):
                 QMessageBox.warning(self, "Warning", f"Field '{old_attribute_name}' not found in class '{class_name}'.")
 
         elif msg_box.clickedButton() == method_button:
+            mult_method = dbf.json_get_method_with_same_name(project_data, class_name, old_attribute_name)
+            method_count = None
+            if mult_method > 0:
+                method_count_str, ok = QInputDialog.getText(None, "Which Method", "Enter Method Count:")
+                if not ok:
+                    QMessageBox.warning(self, "Warning", "count not found.")
+                    return project_data
+                method_count = int(method_count_str)
             # Call the rename method function
-            if uf.update_method_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
+            if uf.update_method_name(project_data, class_name, old_attribute_name, new_attribute_name, method_count) is not None:
                 QMessageBox.information(self, "Success", f"Method '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{old_attribute_name}' not found in class '{class_name}'.")
@@ -909,7 +929,7 @@ class UMLApp(QMainWindow):
         if isinstance(methods, list):
             for method in methods:
                 if isinstance(method, dict) and 'name' in method:
-                    params = dbf.json_get_parameters(project_data, class_name, method["name"])
+                    params = dbf.json_get_parameters(project_data, class_name, method["name"], 0)
                     parameters = ", ".join([param['name'] for param in params if isinstance(param, dict) and 'name' in param]) if isinstance(params, list) else ""
                     attributes += f"Method: {method['name']}({parameters})\n"
         else:
@@ -1042,7 +1062,8 @@ class UMLApp(QMainWindow):
             else:
                 attributes += "None"
             class_box = ClassBox(name, attributes)
-            position = self.scene.find_non_overlapping_position(class_box)
+            position_json = class_["position"]
+            position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
             self.scene.addItem(class_box)
 
