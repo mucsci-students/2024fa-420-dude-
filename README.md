@@ -16,7 +16,8 @@ In the CLI a Class will be structured like the following:
     brand
     Methods:
     setPSI(new_psi)
-
+    ```
+    ```
     Relationship Data:
     Source: Tire
     Destination: Car
@@ -24,7 +25,22 @@ In the CLI a Class will be structured like the following:
     ```
 
 ### Testing 
-In order to run the testing functions you must use pytest in each of the directories. Pytest can be installed with pip/pip3(on linux) pytest. These test files refer to the sprint format. These test file modify and/or create new files so make sure these changes are reversed before re-running the test files.
+All unit and integration tests are run using the pytest python testing framework. There are unit tests for the backend database functions in the Model folder and unit/integration tests for the API in the Control folder. The files can be run separately using:
+```pytest <filename>```
+They can also be run simultaneously using the more broad TestFile.py that sits above the rest of the project filesystem. That program takes a command argument and runs both test files and displays corresponding output for each. It can be run using:
+```
+Windows:
+    python TestFile.py --test
+Linux:
+    python3 TestFile.py --test
+```
+There is also a known bug where the database tests fail on the first run of the broad test file but work on every subsequent run.
 
 ### Requirements
-pip/pip3(Linux) PyQt5
+The only necessary libraries are the standard python json library which is usually included with initial python installation, and the pytest library which is used for all unit/integration tests. They can be installed using the following commands:
+```
+pip install json
+```
+```
+pip install pytest
+```
