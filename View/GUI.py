@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import copy
 
 # Add the project root to sys.path dynamically
 project_root = Path(__file__).resolve().parent.parent
@@ -121,7 +122,7 @@ class UMLScene(QGraphicsScene):
         super(UMLScene, self).__init__()
         self.setSceneRect(0, 0, 800, 600)
 
-    def add_class_box(self, project_data, position=None):
+    def add_class_box(self, project_data, undo_stack, undo_clicked, position=None):
         dialog = ClassDialog()
         if dialog.exec_():
             name = dialog.get_class_name()
@@ -136,6 +137,10 @@ class UMLScene(QGraphicsScene):
                 methods = attributes.split("\n")[2].split(":")[1].split("\n")
             except IndexError:
                 any_methods = False
+            if undo_clicked:
+                undo_stack.clear()
+                undo_clicked = False
+            undo_stack.append(copy.deepcopy(project_data))
             project_data = uf.add_class(project_data, name)
             if any_fields:
                 if fields[0] != ' None':
@@ -167,7 +172,7 @@ class UMLScene(QGraphicsScene):
             project_data = dbf.json_update_pos(project_data, name, pos)
             class_box.setPos(position)
             self.addItem(class_box)
-            return project_data
+            return (project_data, undo_stack, undo_clicked)
 
     # Handles finding a random spaw position for a new box to make sure of no overlapings.
     def find_non_overlapping_position(self, class_box):
@@ -617,6 +622,9 @@ class UMLApp(QMainWindow):
             "classes": [],
             "relationships": []
         }
+        self.undo_stack = []
+        self.undo_clicked = False
+        self.redo_stack = []
 
         self.scene = UMLScene()
         self.view = UMLGraphicsView(self.scene)
@@ -667,6 +675,14 @@ class UMLApp(QMainWindow):
         self.load_button = QPushButton("Load File")
         self.load_button.clicked.connect(self.on_load)
         self.layout.addWidget(self.load_button)
+
+        self.undo_button = QPushButton("Undo")
+        self.undo_button.clicked.connect(self.on_undo)
+        self.layout.addWidget(self.undo_button)
+
+        self.redo_button = QPushButton("Redo")
+        self.redo_button.clicked.connect(self.on_redo)
+        self.layout.addWidget(self.redo_button)
         
 
 
@@ -674,7 +690,10 @@ class UMLApp(QMainWindow):
         self.setGeometry(100, 100, 900, 600)
 
     def on_create_class(self):
-        self.project_data = self.scene.add_class_box(self.project_data)
+        class_box_return = self.scene.add_class_box(self.project_data, self.undo_stack, self.undo_clicked)
+        self.project_data = class_box_return[0]
+        self.undo_stack = class_box_return[1]
+        self.undo_clicked = class_box_return[2]
         print(self.project_data)
 
     def on_delete_class(self):
@@ -686,6 +705,10 @@ class UMLApp(QMainWindow):
             QMessageBox.warning(self, "Warning", "Please select a class to delete.")
             return
         class_name = selected_items[0].name
+        if self.undo_clicked:
+            self.undo_stack.clear()
+            self.undo_clicked = False
+        self.undo_stack.append(copy.deepcopy(self.project_data))
         self.project_data = uf.delete_class(self.project_data, class_name)
 
         # Assume we are dealing with ClassBox instances
@@ -718,6 +741,10 @@ class UMLApp(QMainWindow):
                 new_name, ok = QInputDialog.getText(self, "Rename Class", "Enter new class name:", text=current_name)
             
                 if ok and new_name:  # Ensure the dialog was not cancelled and the new name is not empty
+                    if self.undo_clicked:
+                        self.undo_stack.clear()
+                        self.undo_clicked = False
+                    self.undo_stack.append(copy.deepcopy(self.project_data))
                     self.project_data = uf.update_class_name(self.project_data, current_name, new_name)
                     print(self.project_data)
 
@@ -767,8 +794,16 @@ class UMLApp(QMainWindow):
 
             # Add the attribute based on type
             if attr_type == "Field":
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(project_data))
                 project_data = self.add_field(project_data, class_name, attribute_name, scene, attr_type)
             elif attr_type == "Method":
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(project_data))
                 project_data = self.add_method(project_data, class_name, attribute_name, self.scene, attr_type)
 
         elif msg_box.clickedButton() == delete_attr_button:
@@ -841,11 +876,16 @@ class UMLApp(QMainWindow):
         field_button = msg_box.addButton("Field", QMessageBox.ActionRole)
         method_button = msg_box.addButton("Method", QMessageBox.ActionRole)
         msg_box.exec_()
-
+        temp = copy.deepcopy(project_data)
         # Determine if the user selected field or method
         if msg_box.clickedButton() == field_button:
             # Call the delete field function
+            
             if dbf.json_delete_field(project_data, class_name, attribute_name):
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(temp))
                 QMessageBox.information(self, "Success", f"Field '{attribute_name}' deleted.")
             else:
                 QMessageBox.warning(self, "Warning", f"Field '{attribute_name}' not found in class '{class_name}'.")
@@ -861,6 +901,10 @@ class UMLApp(QMainWindow):
                 method_count = int(method_count_str)
             # Call the delete method function
             if dbf.json_delete_method(project_data, class_name, attribute_name, method_count):
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(temp))
                 QMessageBox.information(self, "Success", f"Method '{attribute_name}' deleted.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{attribute_name}' not found in class '{class_name}'.")
@@ -877,7 +921,7 @@ class UMLApp(QMainWindow):
         field_button = msg_box.addButton("Field", QMessageBox.ActionRole)
         method_button = msg_box.addButton("Method", QMessageBox.ActionRole)
         msg_box.exec_()
-
+        temp = copy.deepcopy(project_data)
         # Get the new attribute name from the user
         new_attribute_name, ok = QInputDialog.getText(self, "Rename Attribute", "Enter the new attribute name:")
         if not ok or not new_attribute_name:
@@ -887,6 +931,10 @@ class UMLApp(QMainWindow):
         if msg_box.clickedButton() == field_button:
             # Call the rename field function
             if uf.update_field_name(project_data, class_name, old_attribute_name, new_attribute_name) is not None:
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(temp))
                 QMessageBox.information(self, "Success", f"Field '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Field '{old_attribute_name}' not found in class '{class_name}'.")
@@ -902,6 +950,10 @@ class UMLApp(QMainWindow):
                 method_count = int(method_count_str)
             # Call the rename method function
             if uf.update_method_name(project_data, class_name, old_attribute_name, new_attribute_name, method_count) is not None:
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(temp))
                 QMessageBox.information(self, "Success", f"Method '{old_attribute_name}' renamed to '{new_attribute_name}'.")
             else:
                 QMessageBox.warning(self, "Warning", f"Method '{old_attribute_name}' not found in class '{class_name}'.")
@@ -969,6 +1021,10 @@ class UMLApp(QMainWindow):
             if class_box_a and class_box_b:
                 relationship = RelationshipLine(class_box_a, class_box_b)
                 self.scene.addItem(relationship)
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(self.project_data))
                 self.project_data = uf.add_relationship(self.project_data, class_a_name, class_b_name, relationship_dialog.get_type())
                 print(self.project_data)
 
@@ -1019,6 +1075,11 @@ class UMLApp(QMainWindow):
             if relationship_item:
                 # Remove the relationship from the scene
                 self.scene.removeItem(relationship_item)
+                if self.undo_clicked:
+                    self.undo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(self.project_data))
+                self.project_data = uf.delete_relationship(self.project_data, class_a_name, class_b_name)
                 # Remove the relationship references from both class boxes
                 class_box_a.remove_relationship(relationship_item)
                 class_box_b.remove_relationship(relationship_item)
@@ -1085,6 +1146,71 @@ class UMLApp(QMainWindow):
                     relationship_line = RelationshipLine(class_box_a, class_box_b)
                     self.scene.addItem(relationship_line)
 
+    def on_undo(self):
+        if len(self.undo_stack) > 0:
+            self.undo_clicked = True
+            self.redo_stack.append(copy.deepcopy(self.project_data))
+            self.project_data = self.undo_stack.pop()
+            # Clear the scene and draw new data
+            self.draw_data()
+
+
+    def on_redo(self):
+        if len(self.redo_stack) > 0:
+            self.undo_stack.append(copy.deepcopy(self.project_data))
+            self.project_data = self.redo_stack.pop()
+            # Clear the scene and draw new data
+            self.draw_data()
+
+    def draw_data(self):
+        self.scene.clear()
+        classes = dbf.json_get_classes(self.project_data)
+        for class_ in classes:
+            name = class_["name"]
+            fields = dbf.json_get_fields(self.project_data, name)
+            methods = dbf.json_get_methods(self.project_data, name)
+            attributes = "Fields: "
+            if fields is not None:
+                for field in fields:
+                    attributes += field["name"] + ", "
+                attributes = attributes[:-2] + "\nMethods:\n"
+            else:
+                attributes += "None\nMethods:\n"
+            if methods is not None:
+                for method in methods:
+                    params = dbf.json_get_parameters(self.project_data, name, method["name"])
+                    parameters = ""
+                    for param in params:
+                        parameters += param["name"] + ", "
+                    if len(parameters) > 0:
+                        parameters = parameters[:-2]
+                    attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+            else:
+                attributes += "None"
+            class_box = ClassBox(name, attributes)
+            position_json = class_["position"]
+            position = QPointF(position_json["x"], position_json["y"])
+            class_box.setPos(position)
+            self.scene.addItem(class_box)
+
+            # Add relationships
+            relationships = dbf.json_get_relationships(self.project_data)
+            class_boxes = []
+            for item in self.scene.items():
+                if isinstance(item, ClassBox):
+                    class_boxes.append(item)
+            for relationship in relationships:
+                class_box_a = None
+                class_box_b = None
+                for class_box in class_boxes:
+                    if class_box.name == relationship["source"]:
+                        class_box_a = class_box
+                    if class_box.name == relationship["destination"]:
+                        class_box_b = class_box
+                if class_box_a and class_box_b:
+                    relationship_line = RelationshipLine(class_box_a, class_box_b)
+                    self.scene.addItem(relationship_line)
+        
                
 
 if __name__ == '__main__':
