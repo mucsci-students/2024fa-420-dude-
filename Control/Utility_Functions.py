@@ -286,7 +286,7 @@ def display_relationship(project_data, source, dest):
     if rel_data is None:
         print("Relationship does not exist.")
         return project_data
-    print("\nRelationship Data:\n")
+    print()
     print("Source: " + rel_data["source"])
     print("Destination: " + rel_data["destination"])
     print("Type: " + rel_data["type"] + "\n")
@@ -298,7 +298,6 @@ def display_all_relationships(project_data):
         print("No relationships available.")
         return project_data
 
-    print("\nAll Relationships Data:\n")
     for rel_data in project_data["relationships"]:
         display_relationship(project_data, rel_data["source"], rel_data["destination"])  # Use the existing display_relationship function
 

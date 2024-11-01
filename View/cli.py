@@ -35,7 +35,7 @@ options = '''Commmands:
         - Removes the field [Name] from the class with name [Class]
     chfield [Class] [Old Field] [New Field] :
         - Changes the name of [Old Field] to [New Field] in [Class]
-    mkmethod [Class] [Method Name] [Return Type] [Parameter 1] [Parameter 2] ... :
+    mkmethod [Class] [Method Name] [Return Type] [Parameter 1] [Parameter 1 Type] [Parameter 2] [Parameter 2 Type]... :
         - Creates methods with all parameters
     rmmethod [Class] [Method Name] :
         - Removes the method with name [Method Name] from [Class]
@@ -193,12 +193,23 @@ while command[0] != "exit":
         case "mkmethod":
             if len(command) < 4:
                 print("Incorrect number of arguments.\n\tUse \"help\" for information")
+            elif len(command) % 2 == 0: 
+                print("Must have return types for parameters")
             else:
                 if (undo_clicked):
                     undo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
-                uf.add_method(project_data, command[1], command[2], command[4:], command[3])
+                parameter = []
+                i = 4
+                while i < len(command):
+                    param = {
+                        "name": command[i],
+                        "type": command[i+1]
+                    }
+                    parameter.append(param)
+                    i  = i + 2
+                uf.add_method(project_data, command[1], command[2], parameter, command[3])
                 
         case "rmmethod":
             if correct_amount_of_inputs_warning(command, 3):
