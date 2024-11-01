@@ -133,21 +133,21 @@ while command[0] != "exit":
         case "mkclass":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.add_class(project_data, command[1])
         case "rmclass":
             if correct_amount_of_inputs_warning(command, 2) is True:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_class(project_data, command[1])
         case "chclass":
             if correct_amount_of_inputs_warning(command, 3) is True:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.update_class_name(project_data, command[1], command[2])
@@ -156,7 +156,7 @@ while command[0] != "exit":
                 type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
                 if command[1] in type_list:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.add_relationship(project_data, command[2], command[3], command[1])
@@ -165,28 +165,28 @@ while command[0] != "exit":
         case "rmrel":
             if correct_amount_of_inputs_warning(command, 3) is True:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_relationship(project_data, command[1], command[2])
         case "mkfield":
             if correct_amount_of_inputs_warning(command, 4) is True:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 uf.add_field(project_data, command[1], command[2], command[3])
         case "rmfield":
             if correct_amount_of_inputs_warning(command, 3):
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.delete_field(project_data, command[1], command[2])
         case "chfield":
             if correct_amount_of_inputs_warning(command, 4):
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.update_field_name(project_data, command[1], command[2], command[3])
@@ -195,7 +195,7 @@ while command[0] != "exit":
                 print("Incorrect number of arguments.\n\tUse \"help\" for information")
             else:
                 if (undo_clicked):
-                    undo_stack.clear()
+                    redo_stack.clear()
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 uf.add_method(project_data, command[1], command[2], command[4:], command[3])
@@ -219,7 +219,7 @@ while command[0] != "exit":
                 number_to_delete = input("Which number method would you like to delete?")
                 if number_to_delete.isnumeric() and int(number_to_delete) <= count:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.delete_method(project_data, command[1], command[2], number_to_delete)
@@ -244,7 +244,7 @@ while command[0] != "exit":
                 number_to_change = input("Which number method would you like to rename?")
                 if number_to_change.isnumeric() and int(number_to_change) <= count:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.update_method_name(project_data, command[1], command[2], command[3], number_to_change)
@@ -268,7 +268,7 @@ while command[0] != "exit":
                 number_to_change = input("Which number method would you like to add a parameter to?")
                 if number_to_change.isnumeric() and int(number_to_change) <= count:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.add_param(project_data, command[1], command[2], number_to_change, command[3], command[4])
@@ -292,7 +292,7 @@ while command[0] != "exit":
                 number_to_delete = input("Which number method would you like to remove the parameter from?")
                 if number_to_delete.isnumeric() and int(number_to_delete) <= count:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.delete_param(project_data, command[1], command[2], number_to_delete, command[3], command[4])
@@ -316,7 +316,7 @@ while command[0] != "exit":
                 number_to_change = input("Which number method would you like to change the parameter in?")
                 if number_to_change.isnumeric() and int(number_to_change) <= count:
                     if (undo_clicked):
-                        undo_stack.clear()
+                        redo_stack.clear()
                         undo_clicked = False
                     undo_stack.append(copy.deepcopy(project_data))
                     project_data = uf.update_param_name(project_data, command[1], command[2], command[3], command[4], command[5], number_to_change)
