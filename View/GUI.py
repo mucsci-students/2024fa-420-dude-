@@ -473,6 +473,10 @@ class ClassDialog(QDialog):
                 param = param.strip()
                 type = param.split(" ")[0]
                 name = param.split(" ")[1]
+                if self.undo_clicked:
+                    self.redo_stack.clear()
+                    self.undo_clicked = False
+                self.undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.add_param(project_data, class_name, method_name, method_count, name, type)
 
         # Update the class box's attributes display
@@ -1203,25 +1207,43 @@ class UMLApp(QMainWindow):
             attributes = "Fields: "
             if fields is not None:
                 for field in fields:
-                    attributes += field["name"] + ", "
+                    attributes += field["type"] + " " + field["name"] + ", "
                 attributes = attributes[:-2] + "\nMethods:\n"
             else:
                 attributes += "None\nMethods:\n"
+            methods_used = []
             if methods is not None:
                 for method in methods:
-                    params = dbf.json_get_parameters(self.project_data, name, method["name"])
-                    parameters = ""
-                    for param in params:
-                        parameters += param["name"] + ", "
-                    if len(parameters) > 0:
-                        parameters = parameters[:-2]
-                    attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+                    if method["name"] not in methods_used:
+                        mult_method = dbf.json_get_method_with_same_name(self.project_data, name, method["name"])
+                        if len(mult_method) > 1:
+                            count = 1
+                            for method_ in mult_method:
+                                params = dbf.json_get_parameters(self.project_data, name, method["name"], count)
+                                parameters = ""
+                                for param in params:
+                                    parameters += param["type"] + " " + param["name"] + ", "
+                                if len(parameters) > 0:
+                                    parameters = parameters[:-2]
+                                attributes += "Method: " + method["return_type"] + " " + method["name"] + "(" + parameters + ")\n"
+                                count += 1
+                        else:
+                            params = dbf.json_get_parameters(self.project_data, name, method["name"], 1)
+                            parameters = ""
+                            for param in params:
+                                parameters += param["type"] + " " + param["name"] + ", "
+                            if len(parameters) > 0:
+                                parameters = parameters[:-2]
+                            attributes += "Method: " + method["return_type"] + " " + method["name"] + "(" + parameters + ")\n"
+                        methods_used.append(method["name"])
             else:
                 attributes += "None"
             class_box = ClassBox(name, attributes)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
+            # Set the moveable flag
+            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
