@@ -435,7 +435,7 @@ class ClassDialog(QDialog):
         method_found = dbf.json_get_method(project_data, class_name, method_name, 1)
         mult_method = dbf.json_get_method_with_same_name(project_data, class_name, method_name)
         method_count = 1
-        if len(mult_method) > 0:
+        if len(mult_method) > 1:
             method_count, ok4 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Which Method", "Enter the method number:")
             if not ok4 or not method_name:
                 return original_project_data # User canceled or provided no method count
@@ -451,7 +451,7 @@ class ClassDialog(QDialog):
         formatted_existing_parameters = ""
         if existing_parameters is not None:
             for param in existing_parameters:
-                formatted_existing_parameters += param["name"] + ", "
+                formatted_existing_parameters += param["type"] + " " + param["name"] + ", "
             dbf.json_delete_all_parameters(project_data, class_name, method_name, method_count)
         if len(formatted_existing_parameters) > 0:
             existing_parameters = formatted_existing_parameters[:-2]
