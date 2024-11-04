@@ -162,6 +162,8 @@ class UMLScene(QGraphicsScene):
                     
 
             class_box = ClassBox(name, attributes)
+            # Set the moveable flag
+            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
 
             if not position:
                 position = self.find_non_overlapping_position(class_box)
@@ -532,10 +534,16 @@ class ClassDialog(QDialog):
     def get_fields(self):
         return self.fields_list  
     
-    def on_save(self, project_data):
+    def on_save(self, project_data, scene):
         file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
         if not ok1 or not file_path:
             return project_data # User canceled or provided no class name
+        # Set the positions for each class box in the project data
+        class_boxes = [item for item in scene.items() if isinstance(item, ClassBox)]
+        for class_box in class_boxes:
+            class_data = dbf.json_get_class(self.project_data, class_box.name)
+            if class_data:
+                project_data = dbf.json_update_pos(project_data, class_box.name, {"x": class_box.pos().x(), "y": class_box.pos().y()})
         return dbf.json_write_file(file_path, project_data)
 
     def on_load(self, project_data):
@@ -1092,7 +1100,7 @@ class UMLApp(QMainWindow):
 
 
     def on_save(self):
-        return ClassDialog.on_save(self, self.project_data)
+        return ClassDialog.on_save(self, self.project_data, self.scene)
 
     def on_load(self):
         data = ClassDialog.on_load(self, self.project_data)
@@ -1108,25 +1116,43 @@ class UMLApp(QMainWindow):
             attributes = "Fields: "
             if fields is not None:
                 for field in fields:
-                    attributes += field["name"] + ", "
+                    attributes += field["type"] + " " + field["name"] + ", "
                 attributes = attributes[:-2] + "\nMethods:\n"
             else:
                 attributes += "None\nMethods:\n"
+            methods_used = []
             if methods is not None:
                 for method in methods:
-                    params = dbf.json_get_parameters(self.project_data, name, method["name"])
-                    parameters = ""
-                    for param in params:
-                        parameters += param["name"] + ", "
-                    if len(parameters) > 0:
-                        parameters = parameters[:-2]
-                    attributes += "Method: " + method["name"] + "(" + parameters + ")\n"
+                    if method["name"] not in methods_used:
+                        mult_method = dbf.json_get_method_with_same_name(self.project_data, name, method["name"])
+                        if len(mult_method) > 1:
+                            count = 1
+                            for method_ in mult_method:
+                                params = dbf.json_get_parameters(self.project_data, name, method["name"], count)
+                                parameters = ""
+                                for param in params:
+                                    parameters += param["type"] + " " + param["name"] + ", "
+                                if len(parameters) > 0:
+                                    parameters = parameters[:-2]
+                                attributes += "Method: " + method["return_type"] + " " + method["name"] + "(" + parameters + ")\n"
+                                count += 1
+                        else:
+                            params = dbf.json_get_parameters(self.project_data, name, method["name"], 1)
+                            parameters = ""
+                            for param in params:
+                                parameters += param["type"] + " " + param["name"] + ", "
+                            if len(parameters) > 0:
+                                parameters = parameters[:-2]
+                            attributes += "Method: " + method["return_type"] + " " + method["name"] + "(" + parameters + ")\n"
+                        methods_used.append(method["name"])
             else:
                 attributes += "None"
             class_box = ClassBox(name, attributes)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
+            # Set the moveable flag
+            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
