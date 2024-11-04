@@ -434,6 +434,7 @@ class ClassDialog(QDialog):
         # Find the method in the class box's attributes (methods)
         method_found = dbf.json_get_method(project_data, class_name, method_name, 1)
         mult_method = dbf.json_get_method_with_same_name(project_data, class_name, method_name)
+        method_count = 1
         if len(mult_method) > 0:
             method_count, ok4 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Which Method", "Enter the method number:")
             if not ok4 or not method_name:
@@ -446,18 +447,18 @@ class ClassDialog(QDialog):
             return original_project_data
 
         # Existing parameters
-        existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name)
+        existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name, method_count)
         formatted_existing_parameters = ""
         if existing_parameters is not None:
             for param in existing_parameters:
                 formatted_existing_parameters += param["name"] + ", "
-            dbf.json_delete_all_parameters(project_data, class_name, method_name)
+            dbf.json_delete_all_parameters(project_data, class_name, method_name, method_count)
         if len(formatted_existing_parameters) > 0:
             existing_parameters = formatted_existing_parameters[:-2]
         else:
             existing_parameters = "None"
         print("Existing parameters: " + str(existing_parameters))
-        print(dbf.json_get_parameters(project_data, class_name, method_name))
+        print(dbf.json_get_parameters(project_data, class_name, method_name, method_count))
         QMessageBox.information(self, "Info", f"Existing parameters: {existing_parameters}")
         # Let user edit the parameters
         new_parameters, ok3 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "Edit Parameters", "Edit parameters (comma separated):", text=existing_parameters)
@@ -470,7 +471,9 @@ class ClassDialog(QDialog):
             print("New parameters: " + str(new_parameters))
             for param in new_parameters.split(","):
                 param = param.strip()
-                project_data = uf.add_param(project_data, class_name, method_name, param)
+                type = param.split(" ")[0]
+                name = param.split(" ")[1]
+                project_data = uf.add_param(project_data, class_name, method_name, method_count, name, type)
 
         # Update the class box's attributes display
         scene_box = None
@@ -483,24 +486,25 @@ class ClassDialog(QDialog):
         attributes = "Fields: "
         if fields is not None:
             for field in fields:
-                attributes += field["name"] + ", "
+                attributes += field["type"] + " " + field["name"] + ", "
             attributes = attributes[:-2] + "\nMethods:\n"
         else:
             attributes += "None\nMethods:\n"
         if methods is not None:
             for method in methods:
-                params = dbf.json_get_parameters(project_data, class_name, method["name"])
+                params = dbf.json_get_parameters(project_data, class_name, method["name"], method_count)
                 parameters = ""
                 for param in params:
-                    parameters += param["name"] + ", "
+                    parameters += param["type"] + " " + param["name"] + ", "
                 if len(parameters) > 0:
                     parameters = parameters[:-2]
-                attributes += "Method: " + method["type"]+ method["name"] + "(" + parameters + ")\n"
+                attributes += "Method: " + method["return_type"] + " " + method["name"] + "(" + parameters + ")\n"
         else:
             attributes += "None"
         print(attributes)
         scene_box.attributes = attributes
         scene_box.update_attributes_display()
+        scene_box.adjust_size()
 
         return project_data
 
@@ -546,12 +550,12 @@ class ClassDialog(QDialog):
                 project_data = dbf.json_update_pos(project_data, class_box.name, {"x": class_box.pos().x(), "y": class_box.pos().y()})
         return dbf.json_write_file(file_path, project_data)
 
-    def on_load(self, project_data):
+    def on_load(self, project_data, scene):
         save = QMessageBox.question(self if isinstance(self, QWidget) else None, "Save", "Would you like to save before loading?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
         if save == QMessageBox.Cancel:
             return None
         if save == QMessageBox.Yes:
-            ClassDialog.on_save(self, project_data)
+            ClassDialog.on_save(self, project_data, scene)
         file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
         if not ok1 or not file_path:
             return None # User canceled or provided no class name
@@ -1103,7 +1107,7 @@ class UMLApp(QMainWindow):
         return ClassDialog.on_save(self, self.project_data, self.scene)
 
     def on_load(self):
-        data = ClassDialog.on_load(self, self.project_data)
+        data = ClassDialog.on_load(self, self.project_data, self.scene)
         if data is None:
             return
         self.scene.clear()
