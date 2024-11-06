@@ -6,6 +6,107 @@ def test_json_connect(capsys):
     assert dbf.json_read_file("sprint3_format.json") is not None
     captured = capsys.readouterr()
 
+# Test file not found
+def test_file_not_found(capsys):
+    assert(dbf.json_file_exists("nonsense_file_path") is False)
+    captured = capsys.readouterr()
+
+# Test file not found for reading
+def test_file_not_readable(capsys):
+    assert(dbf.json_read_file("nonsense_file_path") is None)
+    captured = capsys.readouterr()
+
+# Test key error getting classes
+def test_key_not_found_classes(capsys):
+    assert(dbf.json_get_classes({}) is None)
+    captured = capsys.readouterr()
+
+# Test key error getting relationship
+def test_key_not_found_relationships(capsys):
+    assert(dbf.json_get_relationships({}) is None)
+    captured = capsys.readouterr()
+
+# Test no class data
+def test_no_class_data(capsys):
+    assert(dbf.json_get_class({}, "name") is None)
+    captured = capsys.readouterr()
+
+# Test get relationship data is none
+def test_no_relationship_data(capsys):
+    assert(dbf.json_get_relationship({}, "thing", "thing2") is None)
+    captured = capsys.readouterr()
+
+# Test methods are none
+def test_no_methods(capsys):
+    assert(dbf.json_get_method_with_same_name({}, "class_name", "method_name") is None)
+    captured = capsys.readouterr()
+
+# Test no data when adding class
+def test_no_data_adding_class(capsys):
+    assert(dbf.json_add_class({}, {}) is None)
+    captured = capsys.readouterr()
+
+# Test no data when adding relationship
+def test_no_data_adding_relationship(capsys):
+    assert(dbf.json_add_relationship({}, {}) is None)
+    captured = capsys.readouterr()
+
+# Test no data when adding fields
+def test_no_data_adding_field(capsys):
+    assert(dbf.json_add_field({}, "class_name", {}) is None)
+    captured = capsys.readouterr()
+
+# Test no data when adding method
+def test_no_data_adding_method(capsys):
+    assert(dbf.json_add_method({}, "class_name", {}) is None)
+    captured = capsys.readouterr()
+
+# Test no data when adding parameter
+def test_no_data_adding_parameter(capsys):
+    assert(dbf.json_add_parameter({}, "class_name", "method_name", 1, {}) is None)
+    captured = capsys.readouterr()
+
+# Test no data when renaming classes
+def test_no_data_renaming_class(capsys):
+    assert(dbf.json_rename_class({}, "old_name", "new_name") is None)
+    captured = capsys.readouterr()
+
+
+# Test no data when updating position 
+def test_no_data_updating_position(capsys):
+    assert(dbf.json_update_pos({}, "class_name", None) is None)
+    captured = capsys.readouterr()
+
+# Test no data when updating field
+def test_no_data_updating_field(capsys):
+    assert(dbf.json_rename_field({}, "class_name", "old_name", "new_name") is None)
+    captured = capsys.readouterr()
+
+# Test no data when updating method
+def test_no_data_updating_method(capsys):
+    assert(dbf.json_rename_method({}, "class_name", "old_method_name", "new_method_name", 1) is None)
+    captured = capsys.readouterr()
+
+# Test no data when updating parameter
+def test_no_data_updating_parameter(capsys):
+    assert(dbf.json_rename_parameter({}, "class_name", "method_name", 1, "old_name", "new_name") is None)
+    captured = capsys.readouterr()
+
+# Test no data when deleting class
+def test_no_data_deleting_class(capsys):
+    assert(dbf.json_delete_class({}, "class_name") is None)
+    captured = capsys.readouterr()
+
+# Test no data when deleting relationship
+def test_no_data_deleting_relationship(capsys):
+    assert(dbf.json_delete_relationship({}, "source", "dest") is None)
+    captured = capsys.readouterr()
+
+# Test no data when deleting field
+def test_no_data_deleting_field(capsys):
+    assert(dbf.json_delete_field({}, "class_name", "field_name") is None)
+    captured = capsys.readouterr()
+
 # Test getting the classes from the JSON file
 def test_json_get_classes(capsys):
     project_data = dbf.json_read_file("sprint3_format.json")
