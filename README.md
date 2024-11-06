@@ -36,14 +36,18 @@ Linux:
 ```
 There is also a known bug where the database tests fail on the first run of the broad test file but work on every subsequent run.
 
-### Requirements
-The only necessary libraries are the standard python json library which is usually included with initial python installation, and the pytest library which is used for all unit/integration tests. They can be installed using the following commands:
+### Requirements/Dependencies
+The only necessary libraries are the standard python json library which is usually included with initial python installation, the pytest library which is used for all unit/integration tests, and the readline library for tab completion in the CLI. They can be installed using the following commands:
 ```
 pip install json
 ```
 ```
 pip install pytest
 ```
+```
+pip install readline
+```
+There is a known issue which is the fact that the readline library is not compatible with Windows, which means that the CLI can only be run on Linux machines. It is an issue we found late during Sprint 3 and are already working on fixing.
 
 ### Design Patterns
 Below are the design patterns we used for this project:
