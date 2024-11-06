@@ -10,7 +10,15 @@ def run_tests():
     
     # Run each test file with pytest
     print("Running DBFunctions tests...")
-    subprocess.run([sys.executable, '-m', 'pytest', model_test_path])
+    #subprocess.run([sys.executable, '-m', 'pytest', model_test_path])
+    #pytest --cov=Model.DBFunctions --cov-report=term-missing DBFunctionsTestFile.py
+    subprocess.run([sys.executable, '-m', 'pytest',
+        '--cov=Model.DBFunctions', 
+        '--cov-report=term-missing', 
+        model_test_path,
+        control_test_path
+    ])
+
     
     print("Running Utility Functions tests...")
     subprocess.run([sys.executable, '-m', 'pytest', control_test_path])

@@ -1279,7 +1279,7 @@ class UMLApp(QMainWindow):
                         mult_method = dbf.json_get_method_with_same_name(self.project_data, name, method["name"])
                         if len(mult_method) > 1:
                             count = 1
-                            for method in mult_method:
+                            for method_ in mult_method:
                                 params = dbf.json_get_parameters(self.project_data, name, method["name"], count)
                                 parameters = ""
                                 for param in params:

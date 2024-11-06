@@ -2,7 +2,7 @@
 Senior Capstone Project for fall 24 CSCI 420 by Hunter Weaver, Derrick Boyer, and Ty Reynolds. UML Editor
 
 ### Using the Dudes UML Editor
-The editor uses a files formated with json to store data for each project. When launching the program, the user can use "python3 duml --cli" to use the command line interface or can run it without the --cli flag to use the graphical user interface. When launching a program you can either load a prexisting project or create a new one. Either way you though you must supply a file path that you wish to use for the project. 
+The editor uses a files formated with json to store data for each project. When launching the program, the user can use "python3 View/dude.py --cli" to use the command line interface or can run it without the --cli flag to use the graphical user interface. When launching a program you can either load a prexisting project or create a new one. Either way you though you must supply a file path that you wish to use for the project. 
 
 A project consist of classes which have fields and parameters as well as relationships that connect classes.
 
@@ -44,3 +44,33 @@ pip install json
 ```
 pip install pytest
 ```
+
+### Design Patterns
+Below are the design patterns we used for this project:
+```
+Model, View, Controller (MVC):
+    We use the MVC design pattern to organize our project into the 3 distinct aspects:
+The model, which deals directly with the backend and handles reading and writing data,
+the view, which deals with presenting the data to the user and allowing the user to
+interact with the data, and the controller/API that works as a middleman to format the
+inputs and outputs for both ends.
+
+Memento:
+    We use memento to implement to undo and redo functions for the CLI and GUI. By
+using memento, we are able to save previous program states in and undo and redo stack
+and push and pop those states as necessary.
+
+Null:
+    We use the python version of a Null object (aka None) when querying the backend for
+certain data. If there is some type of error in doing so or the object does not exists,
+the backend functions will return the None object and the control and view can handle
+that as necessary.
+
+Command:
+    We use the command design pattern in both versions of the view. For the CLI, it
+takes the command and turns it into an array object with each token. The CLI then parses
+that array to run each command. The GUI breaks each command into buttons that invoke a
+callback function when clicked, which then goes through each step to get data from the
+user and execute the command the user enacted.
+```
+

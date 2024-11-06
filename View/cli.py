@@ -1,6 +1,7 @@
 # This file controls the CLI.
 import sys
 import copy
+import readline
 from pathlib import Path
 
 # Add the project root to sys.path dynamically
@@ -16,7 +17,7 @@ from Model import DBFunctions as db
 global g_file_path; g_file_path = ""
 
 # Command options printed if user inputs "help"
-options = '''Commmands:
+help_page = '''Commmands:
     mkclass [Name] : 
         - Create a new class with [Name]
     rmclass [Class] : 
@@ -66,6 +67,9 @@ options = '''Commmands:
     exit :
         - Exits the interface'''
 
+#List of commands to allow for TAB completion
+possible_commands = ['mkclass', 'rmclass', 'chclass', 'mkrelationship', 'rmrelationship', 'mkfield', 'rmfield', 'chfield', 'mkmethod', 'rmmethod', 'chmethod', 'mkparameter', 'rmparameter', 'chparameter', 'save', 'load', 'lsclass', 'classinfo', 'lsrelationship', 'undo', 'redo', 'help', 'exit', 'create']
+
 #####################   Functions  ######################
 
 # Checks if the user provided more or less arguments than the number_required
@@ -108,9 +112,17 @@ def create_or_load_file() :
     else:
         return create_or_load_file()
 
+def completer(text, state):
+    options = [cmd for cmd in possible_commands if cmd.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None
 
 ##################  Main Execution Section  ##################
 
+readline.set_completer(completer)
+readline.parse_and_bind('tab: complete')
 
 file_data = create_or_load_file()
 project_data = file_data[0]
@@ -151,7 +163,7 @@ while command[0] != "exit":
                     undo_clicked = False
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.update_class_name(project_data, command[1], command[2])
-        case "mkrel":
+        case "mkrelationship":
             if correct_amount_of_inputs_warning(command, 4) is True:
                 type_list = {"Aggregation", "Composition", "Inheritance", "Realization"}
                 if command[1] in type_list:
@@ -162,7 +174,7 @@ while command[0] != "exit":
                     project_data = uf.add_relationship(project_data, command[2], command[3], command[1])
                 else :
                     print("Type must be one of: Aggregation, Composition, Inheritance, Realization")
-        case "rmrel":
+        case "rmrelationship":
             if correct_amount_of_inputs_warning(command, 3) is True:
                 if (undo_clicked):
                     redo_stack.clear()
@@ -366,7 +378,7 @@ while command[0] != "exit":
                 undo_stack.append(copy.deepcopy(project_data))
                 project_data = redo_stack.pop()
         case "help":
-            print(options)
+            print(help_page)
         case " ":
             print("Please provide a command\n\tUse \"help\" for a list of valid commands")
         case _: # Default case if others did not match
