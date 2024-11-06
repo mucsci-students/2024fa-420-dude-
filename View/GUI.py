@@ -450,7 +450,9 @@ class ClassDialog(QDialog):
 
         if method_found is None:
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' not found in class '{class_name}'.")
-            return original_project_data
+            return original_project_data\
+            
+        temp = copy.deepcopy(project_data)
 
         # Existing parameters
         existing_parameters = dbf.json_get_parameters(project_data, class_name, method_name, method_count)
@@ -471,18 +473,18 @@ class ClassDialog(QDialog):
         if not ok3:
             return original_project_data # User canceled
 
+        if self.undo_clicked:
+            self.redo_stack.clear()
+            self.undo_clicked = False
+        self.undo_stack.append(copy.deepcopy(temp))
 
         # Update the method with the new parameters
-        if new_parameters is not None:
+        if len(new_parameters) > 0:
             print("New parameters: " + str(new_parameters))
             for param in new_parameters.split(","):
                 param = param.strip()
                 type = param.split(" ")[0]
                 name = param.split(" ")[1]
-                if self.undo_clicked:
-                    self.redo_stack.clear()
-                    self.undo_clicked = False
-                self.undo_stack.append(copy.deepcopy(project_data))
                 project_data = uf.add_param(project_data, class_name, method_name, method_count, name, type)
 
         # Update the class box's attributes display
@@ -840,6 +842,16 @@ class UMLApp(QMainWindow):
                     method_name = add_method_dialog.get_method_name()
                     method_type = add_method_dialog.get_method_type()
                     params = add_method_dialog.get_str_parameters()
+                    json_formatted_params = []
+                    if params[0] == '':
+                        params = []
+                    else:
+                        for param in params:
+                            param = param.strip()
+                            type = param.split(" ")[0]
+                            name = param.split(" ")[1]
+                            json_formatted_params.append({ "type": type, "name": name })
+
 
                     # Ensure the method name is provided
                     if not method_name:
@@ -847,7 +859,7 @@ class UMLApp(QMainWindow):
                         return
 
                     # Add the method to the project data
-                    project_data = self.add_method(project_data, class_name, method_name, self.scene, method_type, params)
+                    self.project_data = self.add_method(project_data, class_name, method_name, self.scene, method_type, json_formatted_params)
 
         elif msg_box.clickedButton() == delete_attr_button:
             # Prompt for the attribute name to delete
@@ -856,7 +868,7 @@ class UMLApp(QMainWindow):
                 return  # User canceled or didn't provide an attribute name
 
             # Delete the attribute based on type
-            self.delete_attribute(project_data, class_name, attribute_name, scene, attr_type)
+            self.project_data = self.delete_attribute(project_data, class_name, attribute_name, scene, attr_type)
 
         elif msg_box.clickedButton() == rename_attr_button:
             # Prompt for the attribute name to rename
@@ -887,6 +899,10 @@ class UMLApp(QMainWindow):
 
 
         # Update the project data with the modified class
+        if self.undo_clicked:
+            self.redo_stack.clear()
+            self.undo_clicked = False
+        self.undo_stack.append(copy.deepcopy(project_data))
         project_data = uf.add_field(project_data, class_name, field_name, attr_type)
 
         # Update the UI
@@ -898,12 +914,16 @@ class UMLApp(QMainWindow):
 
     def add_method(self, project_data, class_name, method_name, scene, attr_type, params):
         # Check if the method already exists to prevent adding it twice
-        existing_methods = dbf.json_get_methods(project_data, class_name)
-        if any(method['name'] == method_name for method in existing_methods):
+        existing_methods = dbf.json_get_method_with_same_name(project_data, class_name, method_name)
+        if any(method['name'] == method_name and method["params"] == params for method in existing_methods):
             QMessageBox.warning(self, "Warning", f"Method '{method_name}' already exists in class '{class_name}'.")
             return project_data
         
         # Add the method to the project data
+        if self.undo_clicked:
+            self.redo_stack.clear()
+            self.undo_clicked = False
+        self.undo_stack.append(copy.deepcopy(project_data))
         project_data = uf.add_method(project_data, class_name, method_name, params, attr_type)
         print(f"Method {method_name} added with params: {params}")
 
@@ -928,7 +948,7 @@ class UMLApp(QMainWindow):
             if self.undo_clicked:
                 self.redo_stack.clear()
                 self.undo_clicked = False
-                self.undo_stack.append(copy.deepcopy(temp))
+            self.undo_stack.append(copy.deepcopy(temp))
             project_data = uf.delete_field(project_data, class_name, attribute_name)
             if dbf.json_get_field(project_data, class_name, attribute_name) is None:
                  QMessageBox.information(self, "Success", f"Field '{attribute_name}' deleted.")
@@ -951,6 +971,7 @@ class UMLApp(QMainWindow):
                 QMessageBox.information(self, "Success", f"Method '{attribute_name}' deleted.")
         # Update the scene attributes display after deletion
         self.update_scene_attributes(scene, project_data, class_name)
+        return project_data
 
 
     def rename_attribute(self, project_data, class_name, old_attribute_name, new_name, scene, attr_type):
@@ -1027,10 +1048,19 @@ class UMLApp(QMainWindow):
             for method in methods:
                 if isinstance(method, dict) and 'name' in method and 'return_type' in method:
                     return_type = method['return_type']  # Get the return type
+                    method_name = method['name']
                     # Create a string for parameters
-                    params = method.get('params', [])
-                    parameters = ", ".join(params) if isinstance(params, list) else ""
-                    method_line = f"{return_type} {method['name']}({parameters})" if parameters else f"{return_type} {method['name']}"
+                    params = method["params"]
+                    formatted_params = "("
+                    for param in params:
+                        type = param["type"]
+                        name = param["name"]
+                        formatted_params += f"{type} {name}, "
+                    if len(formatted_params) > 1:
+                        formatted_params = formatted_params[:-2]
+                    formatted_params += ")"
+                    # Add formatted string to the list
+                    method_line = f"Method: {return_type} {method_name}{formatted_params}"
                     method_lines.append(method_line)
             attributes += "\n".join(method_lines) or "None"
 
@@ -1218,6 +1248,7 @@ class UMLApp(QMainWindow):
             self.project_data = self.undo_stack.pop()
             # Clear the scene and draw new data
             self.draw_data()
+            print("Redo stack:\n" + str(self.redo_stack))
 
 
     def on_redo(self):
