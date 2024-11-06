@@ -37,12 +37,15 @@ Linux:
 There is also a known bug where the database tests fail on the first run of the broad test file but work on every subsequent run.
 
 ### Requirements/Dependencies
-The only necessary libraries are the standard python json library which is usually included with initial python installation, the pytest library which is used for all unit/integration tests, and the readline library for tab completion in the CLI. They can be installed using the following commands:
+The only necessary libraries are the standard python json library which is usually included with initial python installation, the pytest library which is used for all unit/integration tests, PyQt5 for the GUI, and the readline library for tab completion in the CLI. They can be installed using the following commands:
 ```
 pip install json
 ```
 ```
 pip install pytest
+```
+```
+pip install PyQt5
 ```
 ```
 pip install readline
