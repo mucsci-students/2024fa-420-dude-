@@ -12,7 +12,11 @@ def add_class(project_data, class_name):
     class_data = {
         "name": class_name,
         "fields": [],
-        "methods": []
+        "methods": [],
+        "position": {
+            "x": 0,
+            "y": 0
+        }
     }
     print("Added class " + class_name)
     return dbf.json_add_class(project_data, class_data)
@@ -48,7 +52,7 @@ def add_relationship(project_data, source, dest, rel_type):
     return dbf.json_add_relationship(project_data, rel_data)
 
 # Function to add a field to a class in the project data.
-def add_field(project_data, class_name, field_name):
+def add_field(project_data, class_name, field_name, field_type):
     field_data = dbf.json_get_fields(project_data, class_name)
     if field_data is None:
         print("Class does not exist.")
@@ -58,31 +62,31 @@ def add_field(project_data, class_name, field_name):
         if field["name"] == field_name:
             print("Field already exists.")
             return project_data
-
     field_data = {
-        "name": field_name
+        "name": field_name,
+        "type": field_type
     }
     print("Added field " + field_name + " to class " + class_name + ".")
     return dbf.json_add_field(project_data, class_name, field_data)
 
 # Function to add a method to a class in the project data.
-def add_method(project_data, class_name, method_name, params):
+def add_method(project_data, class_name, method_name, params, return_type):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
     
-    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    method_data = dbf.json_get_methods(project_data, class_name)
     if method_data is not None:
-        print("Method already exists.")
-        return project_data
+        for method in method_data:
+            if method["name"] == method_name and method["params"] == params:
+                print("Method already exists.")
+                return project_data
 
-    param_list = []
-    for param in params:
-        param_list.append({ "name": param })
     method_data = {
         "name": method_name,
-        "params": param_list
+        "return_type": return_type,
+        "params": params
     }
     print("Added parameters [", end="")
     print(*params, sep=", ", end="")
@@ -90,26 +94,29 @@ def add_method(project_data, class_name, method_name, params):
     return dbf.json_add_method(project_data, class_name, method_data)
 
 # Function to add a parameter to a method in the project data.
-def add_param(project_data, class_name, method_name, param_name):
+def add_param(project_data, class_name, method_name, count, param_name, param_type):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    method_data = dbf.json_get_method(project_data, class_name, method_name, count)
     if method_data is None:
         print("Method does not exist.")
         return project_data
-    param_data = dbf.json_get_parameters(project_data, class_name, method_name)
-    for param in param_data:
-        if param["name"] == param_name:
-            print("Parameter already exists.")
-            return project_data
+    param_data = dbf.json_get_parameters(project_data, class_name, method_name, count)
+    if param_data is not None:
+        for param in param_data:
+            if param["name"] == param_name:
+                print("Parameter already exists.")
+                return project_data
 
     param_data = {
-        "name": param_name
+        "name": param_name,
+        "type": param_type
     }
 
-    return dbf.json_add_parameter(project_data, class_name, method_name, param_data)
+    print("Added parameter " + param_name + " for method " + method_name + " in class " + class_name + ".")
+    return dbf.json_add_parameter(project_data, class_name, method_name, count, param_data)
 
 
 ############### All delete functions. ####################
@@ -152,34 +159,35 @@ def delete_field(project_data, class_name, field_name):
     return dbf.json_delete_field(project_data, class_name, field_name)
 
 # Function to delete a method from a class in the project data.
-def delete_method(project_data, class_name, method_name):
+def delete_method(project_data, class_name, method_name, count):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    method_data = dbf.json_get_method(project_data, class_name, method_name, count)
     if method_data is None:
         print("Method does not exist.")
         return project_data
 
     print("Removed method " + method_name + " from class " + class_name)
-    return dbf.json_delete_method(project_data, class_name, method_name)
+    return dbf.json_delete_method(project_data, class_name, method_name, count)
 
 # Function to delete a parameter from a method in the project data.
-def delete_param(project_data, class_name, method_name, param_name):
+def delete_param(project_data, class_name, method_name, count, param_name, param_type):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    method_data = dbf.json_get_method(project_data, class_name, method_name, count)
     if method_data is None:
         print("Method does not exist.")
         return project_data
-    param_data = dbf.json_get_parameter(project_data, class_name, method_name, param_name)
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, param_name, param_type, count)
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
-    return dbf.json_delete_parameter(project_data, class_name, method_name, param_name)
+    print("Removed parameter " + param_name + " for method " + method_name + " in class " + class_name + ".")
+    return dbf.json_delete_parameter(project_data, class_name, method_name, count, param_name)
 
 ############### All update functions. ####################
 
@@ -203,37 +211,40 @@ def update_field_name(project_data, class_name, old_name, new_name):
     if field_data is None:
         print("Field does not exist.")
         return project_data
-
+    print("Changed field " + old_name + " to " + new_name + " for class " + class_name)
     return dbf.json_rename_field(project_data, class_name, old_name, new_name)
 
 # Function to rename a method in a class in the project data.
-def update_method_name(project_data, class_name, old_name, new_name):
+def update_method_name(project_data, class_name, old_name, new_name, count):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    method_data = dbf.json_get_method(project_data, class_name, old_name)
+    method_data = dbf.json_get_method(project_data, class_name, old_name, count)
     if method_data is None:
         print("Method does not exist.")
         return project_data
 
-    return dbf.json_rename_method(project_data, class_name, old_name, new_name)
+    print("Changed method " + old_name + " to " + new_name + " for class " + class_name)
+    return dbf.json_rename_method(project_data, class_name, old_name, new_name, count)
 
 # Function to rename a parameter in a method in the project data.
-def update_param_name(project_data, class_name, method_name, old_name, new_name):
+def update_param_name(project_data, class_name, method_name, old_name, new_name, param_type, count):
     class_data = dbf.json_get_class(project_data, class_name)
     if class_data is None:
         print("Class does not exist.")
         return project_data
-    method_data = dbf.json_get_method(project_data, class_name, method_name)
+    method_data = dbf.json_get_method(project_data, class_name, method_name, count)
     if method_data is None:
         print("Method does not exist.")
         return project_data
-    param_data = dbf.json_get_parameter(project_data, class_name, method_name, old_name)
+    param_data = dbf.json_get_parameter(project_data, class_name, method_name, old_name, param_type, count)
     if param_data is None:
         print("Parameter does not exist.")
         return project_data
-    return dbf.json_rename_parameter(project_data, class_name, method_name, old_name, new_name)
+
+    print("Changed parameter " + old_name + " to " + new_name + " for class " + class_name + " in method " + method_name + ".")
+    return dbf.json_rename_parameter(project_data, class_name, method_name, count, old_name, new_name)
     
 
 ############### All display functions. ####################
@@ -247,17 +258,17 @@ def display_class(project_data, class_name):
     print("Class Name: " + class_data["name"])
     print("Fields:")
     for field in class_data["fields"]:
-        print(field["name"])
+        print(field["name"] + " : " + field["type"])
     print("Methods:")
     for method in class_data["methods"]:
         param_string = "("
         for param in method["params"]:
-            param_string += param["name"] + ", "
+            param_string += param["name"] + " : " + param["type"] + ", "
         if len(param_string) > 1:
             param_string = param_string[:-2] + ")"
         else:
             param_string += ")"
-        print(method["name"] + param_string + "\n")
+        print(method["name"] + param_string + " Return Type: " + method["return_type"] + "\n")
     return project_data
 
 # Displays all classes
@@ -275,7 +286,7 @@ def display_relationship(project_data, source, dest):
     if rel_data is None:
         print("Relationship does not exist.")
         return project_data
-    print("\nRelationship Data:\n")
+    print()
     print("Source: " + rel_data["source"])
     print("Destination: " + rel_data["destination"])
     print("Type: " + rel_data["type"] + "\n")
@@ -287,7 +298,6 @@ def display_all_relationships(project_data):
         print("No relationships available.")
         return project_data
 
-    print("\nAll Relationships Data:\n")
     for rel_data in project_data["relationships"]:
         display_relationship(project_data, rel_data["source"], rel_data["destination"])  # Use the existing display_relationship function
 
