@@ -24,14 +24,17 @@ from PyQt5.QtWidgets import QGraphicsLineItem
 
 # Makes box in the window when a class is created.
 class ClassBox(QGraphicsRectItem):
-    def __init__(self, name, attributes):
+    def __init__(self, name, attributes, app_instance):
         super(ClassBox, self).__init__()
 
         self.name = name
         self.attributes = attributes
+        self.uml_app = app_instance
         self.setRect(0, 0, 200, 100)
 
-        self.setFlag(QGraphicsRectItem.ItemIsSelectable)
+        self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsRectItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsRectItem.ItemSendsGeometryChanges)
 
         # Draw the class name at the top
         self.text = QGraphicsTextItem(self.name, self)
@@ -46,6 +49,17 @@ class ClassBox(QGraphicsRectItem):
 
         # Adjust size based on text content
         self.adjust_size()
+
+    def itemChange(self, change, value):
+        if change == QGraphicsRectItem.ItemPositionHasChanged:
+            pos = {
+                "x": value.x(),
+                "y": value.y(),
+            }
+            self.uml_app.project_data = dbf.json_update_pos(self.uml_app.project_data, self.name, pos)
+            for relationship in self.relationships:
+                relationship.update_line()
+        return super().itemChange(change, value)
 
 
     def format_attributes(self):
@@ -118,8 +132,9 @@ class RelationshipLine(QGraphicsLineItem):
 class UMLScene(QGraphicsScene):
     MIN_DISTANCE = 500  # Minimum distance between boxes
 
-    def __init__(self):
+    def __init__(self, app_instance):
         super(UMLScene, self).__init__()
+        self.uml_app = app_instance
         self.setSceneRect(0, 0, 800, 600)
 
     def add_class_box(self, project_data, undo_stack, undo_clicked, redo_stack, position=None):
@@ -166,9 +181,7 @@ class UMLScene(QGraphicsScene):
                         project_data = uf.add_method(project_data, name, method_name, parameters, return_type)
           
 
-            class_box = ClassBox(name, attributes)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
+            class_box = ClassBox(name, attributes, self.uml_app)
 
             if not position:
                 position = self.find_non_overlapping_position(class_box)
@@ -650,7 +663,7 @@ class UMLApp(QMainWindow):
         self.undo_clicked = False
         self.redo_stack = []
 
-        self.scene = UMLScene()
+        self.scene = UMLScene(self)
         self.view = UMLGraphicsView(self.scene)
 
         self.central_widget = QWidget()
@@ -1215,12 +1228,10 @@ class UMLApp(QMainWindow):
                         methods_used.append(method["name"])
             else:
                 attributes += "None"
-            class_box = ClassBox(name, attributes)
+            class_box = ClassBox(name, attributes, self)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
@@ -1299,12 +1310,10 @@ class UMLApp(QMainWindow):
                         methods_used.append(method["name"])
             else:
                 attributes += "None"
-            class_box = ClassBox(name, attributes)
+            class_box = ClassBox(name, attributes, self)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
