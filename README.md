@@ -67,11 +67,9 @@ Memento:
 using memento, we are able to save previous program states in and undo and redo stack
 and push and pop those states as necessary.
 
-Null:
-    We use the python version of a Null object (aka None) when querying the backend for
-certain data. If there is some type of error in doing so or the object does not exists,
-the backend functions will return the None object and the control and view can handle
-that as necessary.
+Observer:
+    We use the observer design pattern for updating when a class box is moved in the
+GUI. We created an observer to watch for when a class box is moved so it can update the relationship line accordingly.
 
 Command:
     We use the command design pattern in both versions of the view. For the CLI, it
@@ -79,5 +77,10 @@ takes the command and turns it into an array object with each token. The CLI the
 that array to run each command. The GUI breaks each command into buttons that invoke a
 callback function when clicked, which then goes through each step to get data from the
 user and execute the command the user enacted.
+
+Iterator:
+    We use the iterator design pattern to iterate through all of project data
+whenever we need to update the scene for the GUI, such as on undo/redo. Whenever the
+user undoes or redoes an action, the program has to iterate through the new project data to update the scene as necessary.
 ```
 

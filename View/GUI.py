@@ -21,6 +21,17 @@ from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QRectF, QLineF, QPointF
 from PyQt5.QtWidgets import QGraphicsLineItem
 
+# Oberver pattern to update the GUI.
+class Observer():
+    def __init__(self, class_box):
+        self.class_box = class_box
+
+    def update_data(self, new_pos):
+        self.class_box.uml_app.project_data = dbf.json_update_pos(self.class_box.uml_app.project_data, self.class_box.name, new_pos)
+        for relationship in self.class_box.relationships:
+            relationship.update_line()
+        
+
 
 # Makes box in the window when a class is created.
 class ClassBox(QGraphicsRectItem):
@@ -30,6 +41,7 @@ class ClassBox(QGraphicsRectItem):
         self.name = name
         self.attributes = attributes
         self.uml_app = app_instance
+        self.observer = Observer(self)
         self.setRect(0, 0, 200, 100)
 
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
@@ -56,9 +68,7 @@ class ClassBox(QGraphicsRectItem):
                 "x": value.x(),
                 "y": value.y(),
             }
-            self.uml_app.project_data = dbf.json_update_pos(self.uml_app.project_data, self.name, pos)
-            for relationship in self.relationships:
-                relationship.update_line()
+            self.observer.update_data(pos)
         return super().itemChange(change, value)
 
 
