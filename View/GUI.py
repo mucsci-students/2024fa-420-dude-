@@ -88,11 +88,12 @@ class ClassBox(QGraphicsRectItem):
 
 # Lines made when you create a relationship.
 class RelationshipLine(QGraphicsLineItem):
-    def __init__(self, class_box_a, class_box_b):
+    def __init__(self, class_box_a, class_box_b, scene):
         super(RelationshipLine, self).__init__()
 
         self.class_box_a = class_box_a
         self.class_box_b = class_box_b
+        self.scene = scene  # Store the scene reference to access items
 
         self.class_box_a.add_relationship(self)
         self.class_box_b.add_relationship(self)
@@ -101,22 +102,42 @@ class RelationshipLine(QGraphicsLineItem):
 
     # Functionality for arealtionship line.
     def update_line(self):
-
         # Ensure class_box_a is on the left and class_box_b is on the right
         if self.class_box_a.pos().x() > self.class_box_b.pos().x():
             self.class_box_a, self.class_box_b = self.class_box_b, self.class_box_a
 
-        # Middle right point of class_box_a
+        # Calculate start and end points
         start_x = self.class_box_a.rect().right() + self.class_box_a.pos().x()
         start_y = self.class_box_a.rect().center().y() + self.class_box_a.pos().y()
         start_point = QPointF(start_x, start_y)
 
-        # Middle left point of class_box_b
         end_x = self.class_box_b.rect().left() + self.class_box_b.pos().x()
         end_y = self.class_box_b.rect().center().y() + self.class_box_b.pos().y()
         end_point = QPointF(end_x, end_y)
 
-        self.setLine(QLineF(start_point, end_point))
+        # Set initial line
+        proposed_line = QLineF(start_point, end_point)
+
+        # Check for intersections with other lines
+        if self.intersects_existing_lines(proposed_line):
+            # Adjust the line slightly (for demonstration, we’ll offset vertically by 10 pixels)
+            start_point.setY(start_point.y() - 10)
+            end_point.setY(end_point.y() - 10)
+            proposed_line = QLineF(start_point, end_point)
+
+        # Set the adjusted or original line
+        self.setLine(proposed_line)
+
+    def intersects_existing_lines(self, new_line):
+        """Checks if the new line intersects with any other line in the scene."""
+        for item in self.scene.items():
+            # Only check against other RelationshipLines
+            if isinstance(item, RelationshipLine) and item is not self:
+                # Check if lines intersect
+                intersect_point = QPointF()
+                if new_line.intersect(item.line(), intersect_point) == QLineF.BoundedIntersection:
+                    return True
+        return False
 
 
     def boundingRect(self):
@@ -1109,7 +1130,7 @@ class UMLApp(QMainWindow):
             class_box_b = next((box for box in class_boxes if box.name == class_b_name), None)
 
             if class_box_a and class_box_b:
-                relationship = RelationshipLine(class_box_a, class_box_b)
+                relationship = RelationshipLine(class_box_a, class_box_b, self.scene)
                 self.scene.addItem(relationship)
                 if self.undo_clicked:
                     self.redo_stack.clear()
