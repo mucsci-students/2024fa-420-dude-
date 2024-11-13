@@ -82,5 +82,20 @@ Iterator:
     We use the iterator design pattern to iterate through all of project data
 whenever we need to update the scene for the GUI, such as on undo/redo. Whenever the
 user undoes or redoes an action, the program has to iterate through the new project data to update the scene as necessary.
+
+Chain of Responsibility:
+    We use the chain of responsibility design pattern for essentially every function
+    our program offers. The view will take in the request and do some processing,
+    where it will then pass the main project data to the appropriate API function, along with any necessary data, where the API will do the checks for edge cases 
+    and errors that may occur, which then passes the request and data to the
+    appropriate backend function, where the command is processed/fails and 
+    an appropriate return value is passed back up the chain. This allows the
+    different parts of the "chain" to have a different responsibility depending on
+    the state of the program, and each part handles something that the others don't
+    The view handles command processing and data input/output, the controller
+    handles edge/error cases and communication between the view and model, and the
+    model handles basic format checks and data reading/writing. By dividing up these
+    responsibilities into different parts, we can better diagnose/pinpoint
+    bugs in our program.
 ```
 
