@@ -341,8 +341,9 @@ def json_add_parameter(data, class_name, method_name, count, new_parameter_data)
     for m in methods:
         if m["name"] == method_name:
             if str(temp) == str(count):
-                parameters = m["params"]
-                if parameters is None:
+                try:
+                    parameters = m["params"]
+                except KeyError:
                     print("Error getting parameter data.")
                     print(json_format)
                     return None
@@ -503,8 +504,9 @@ def json_rename_parameter(data, class_name, method_name, count, old_parameter_na
     for m in methods:
         if m["name"] == method_name:
             if int(temp) == int(count):
-                parameters = m["params"]
-                if parameters is None:
+                try:
+                    parameters = m["params"]
+                except KeyError:
                     print("Error getting parameter data.")
                     print(json_format)
                     return None
@@ -661,8 +663,9 @@ def json_delete_parameter(data, class_name, method_name, count, parameter_name):
     for m in methods:
         if m["name"] == method_name:
             if int(temp) == int(count):
-                parameters = m["params"]
-                if parameters is None:
+                try:
+                    parameters = m["params"]
+                except KeyError:
                     print("Error getting parameter data.")
                     print(json_format)
                     return None
