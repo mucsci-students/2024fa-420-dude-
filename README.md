@@ -48,9 +48,8 @@ pip install pytest
 pip install PyQt5
 ```
 ```
-pip install readline
+pip install pyreadline3 (Windows)  
 ```
-There is a known issue which is the fact that the readline library is not compatible with Windows, which means that the CLI can only be run on Linux machines. It is an issue we found late during Sprint 3 and are already working on fixing.
 
 ### Design Patterns
 Below are the design patterns we used for this project:
@@ -80,10 +79,11 @@ callback function when clicked, which then goes through each step to get data fr
 user and execute the command the user enacted.
 
 Iterator:
-    We use the iterator design pattern to iterate through all of project data
-whenever we need to update the scene for the GUI, such as on undo/redo. Whenever the
-user undoes or redoes an action, the program has to iterate through the new project data
-to update the scene as necessary.
+    We use the iterator design pattern to iterate through all of relationship data
+whenever we need to print out the relationships for the CLI. We created an
+iterator object that has a next function and something that allows you to access 
+the data that it is currently pointing at. Doing so allows us to abstract the access
+and iteration through the data.
 
 Chain of Responsibility:
     We use the chain of responsibility design pattern for essentially every function

@@ -68,7 +68,7 @@ help_page = '''Commmands:
         - Exits the interface'''
 
 #List of commands to allow for TAB completion
-possible_commands = ['mkclass', 'rmclass', 'chclass', 'mkrelationship', 'rmrelationship', 'mkfield', 'rmfield', 'chfield', 'mkmethod', 'rmmethod', 'chmethod', 'mkparameter', 'rmparameter', 'chparameter', 'save', 'load', 'lsclass', 'classinfo', 'lsrelationship', 'undo', 'redo', 'help', 'exit', 'create']
+possible_commands = {'mkclass', 'rmclass', 'chclass', 'mkrelationship', 'rmrelationship', 'mkfield', 'rmfield', 'chfield', 'mkmethod', 'rmmethod', 'chmethod', 'mkparameter', 'rmparameter', 'chparameter', 'save', 'load', 'lsclass', 'classinfo', 'lsrelationship', 'undo', 'redo', 'help', 'exit', 'create'}
 
 #####################   Functions  ######################
 
@@ -383,6 +383,10 @@ while command[0] != "exit":
             print("Please provide a command\n\tUse \"help\" for a list of valid commands")
         case _: # Default case if others did not match
             print(command[0] + " is not a command\n\tUse \"help\" for a list of valid commands")
+
+    if user_input != " " or user_input != "":
+        for option in command:
+            possible_commands.add(option)
 
     user_input = input("DUML: ") # Prints the prompt again
     # Splits user input and checks for empty input

@@ -1,5 +1,23 @@
 from Model import DBFunctions as dbf
 
+# Class for iterator design pattern.
+class LoopIterator():
+    def __init__(self, data):
+        self.data = data
+        self.index = 0
+
+    def next(self):
+        if self.index < len(self.data)-1 and self.index >= 0:
+            self.index += 1
+        else:
+            self.index = -1
+
+    def get_index(self):
+        return self.index
+
+    def get_data(self):
+        return self.data[self.index]
+
 ############### All add functions. ####################
 
 # Function to add a class to the project data.
@@ -298,8 +316,11 @@ def display_all_relationships(project_data):
         print("No relationships available.")
         return project_data
 
-    for rel_data in project_data["relationships"]:
-        display_relationship(project_data, rel_data["source"], rel_data["destination"])  # Use the existing display_relationship function
+    iterator = LoopIterator(project_data["relationships"])
+    while iterator.get_index() != -1:
+        rel_data = iterator.get_data()
+        display_relationship(project_data, rel_data["source"], rel_data["destination"])
+        iterator.next()
 
     return project_data
 
