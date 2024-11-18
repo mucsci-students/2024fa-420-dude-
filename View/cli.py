@@ -132,6 +132,11 @@ undo_stack = []
 redo_stack = []
 undo_clicked = False
 
+current_names = uf.get_all_names(project_data)
+for name in current_names:
+    possible_commands.add(name)
+# print("Possible commands: " + str(possible_commands)) # Debugging line
+
 # Prompts the user for input
 #   DUML stands for Dude UML
 user_input = input("DUML: ") # Prompts user for input
