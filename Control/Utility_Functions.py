@@ -349,4 +349,36 @@ def create_project_data_file(file_path):
     return project_data
 
 
+############### Excess functions. ####################
+
+# Function to make a list of all names in the project data
+def get_all_names(project_data):
+    names = []
+    classes = dbf.json_get_classes(project_data)
+    if classes is None:
+        print("No classes available.")
+        return names
+    for class_data in classes:
+        names.append(class_data["name"])
+        fields = dbf.json_get_fields(project_data, class_data["name"])
+        if fields is not None:
+            for field in fields:
+                names.append(field["name"])
+        methods = dbf.json_get_methods(project_data, class_data["name"])
+        if methods is not None:
+            for method in methods:
+                names.append(method["name"])
+                try:
+                    params = method["params"]
+                except KeyError:
+                    print("Parameter key error for method " + method["name"] + " in class " + class_data["name"])
+                    continue
+                if params is not []:
+                    for param in params:
+                        names.append(param["name"])
+    return names
+
+
+
+
 
