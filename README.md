@@ -48,6 +48,7 @@ pip install pytest
 pip install PyQt5
 ```
 ```
+pip install readline (Linux)
 pip install pyreadline3 (Windows)  
 ```
 
