@@ -48,8 +48,7 @@ pip install pytest
 pip install PyQt5
 ```
 ```
-pip install readline (linux)
-pip install pyreadline (windows)
+pip install readline
 ```
 
 ### Design Patterns
