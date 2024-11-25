@@ -48,9 +48,9 @@ pip install pytest
 pip install PyQt5
 ```
 ```
-pip install readline
+pip install readline (linux)
+pip install pyreadline (windows)
 ```
-There is a known issue which is the fact that the readline library is not compatible with Windows, which means that the CLI can only be run on Linux machines. It is an issue we found late during Sprint 3 and are already working on fixing.
 
 ### Design Patterns
 Below are the design patterns we used for this project:
