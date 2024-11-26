@@ -1,5 +1,23 @@
 from Model import DBFunctions as dbf
 
+# Class for iterator design pattern.
+class LoopIterator():
+    def __init__(self, data):
+        self.data = data
+        self.index = 0
+
+    def next(self):
+        if self.index < len(self.data)-1 and self.index >= 0:
+            self.index += 1
+        else:
+            self.index = -1
+
+    def get_index(self):
+        return self.index
+
+    def get_data(self):
+        return self.data[self.index]
+
 ############### All add functions. ####################
 
 # Function to add a class to the project data.
@@ -298,8 +316,11 @@ def display_all_relationships(project_data):
         print("No relationships available.")
         return project_data
 
-    for rel_data in project_data["relationships"]:
-        display_relationship(project_data, rel_data["source"], rel_data["destination"])  # Use the existing display_relationship function
+    iterator = LoopIterator(project_data["relationships"])
+    while iterator.get_index() != -1:
+        rel_data = iterator.get_data()
+        display_relationship(project_data, rel_data["source"], rel_data["destination"])
+        iterator.next()
 
     return project_data
 
@@ -326,6 +347,38 @@ def create_project_data_file(file_path):
         return None
     print("Created new project data file at path: " + file_path)
     return project_data
+
+
+############### Excess functions. ####################
+
+# Function to make a list of all names in the project data
+def get_all_names(project_data):
+    names = []
+    classes = dbf.json_get_classes(project_data)
+    if classes is None:
+        print("No classes available.")
+        return names
+    for class_data in classes:
+        names.append(class_data["name"])
+        fields = dbf.json_get_fields(project_data, class_data["name"])
+        if fields is not None:
+            for field in fields:
+                names.append(field["name"])
+        methods = dbf.json_get_methods(project_data, class_data["name"])
+        if methods is not None:
+            for method in methods:
+                names.append(method["name"])
+                try:
+                    params = method["params"]
+                except KeyError:
+                    print("Parameter key error for method " + method["name"] + " in class " + class_data["name"])
+                    continue
+                if params is not []:
+                    for param in params:
+                        names.append(param["name"])
+    return names
+
+
 
 
 

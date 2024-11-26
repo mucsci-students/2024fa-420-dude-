@@ -48,9 +48,9 @@ pip install pytest
 pip install PyQt5
 ```
 ```
-pip install readline
+pip install readline (Linux)
+pip install pyreadline3 (Windows)  
 ```
-There is a known issue which is the fact that the readline library is not compatible with Windows, which means that the CLI can only be run on Linux machines. It is an issue we found late during Sprint 3 and are already working on fixing.
 
 ### Design Patterns
 Below are the design patterns we used for this project:
@@ -67,11 +67,10 @@ Memento:
 using memento, we are able to save previous program states in and undo and redo stack
 and push and pop those states as necessary.
 
-Null:
-    We use the python version of a Null object (aka None) when querying the backend for
-certain data. If there is some type of error in doing so or the object does not exists,
-the backend functions will return the None object and the control and view can handle
-that as necessary.
+Observer:
+    We use the observer design pattern for updating when a class box is moved in the
+GUI. We created an observer to watch for when a class box is moved so it can update the
+relationship line accordingly.
 
 Command:
     We use the command design pattern in both versions of the view. For the CLI, it
@@ -79,5 +78,26 @@ takes the command and turns it into an array object with each token. The CLI the
 that array to run each command. The GUI breaks each command into buttons that invoke a
 callback function when clicked, which then goes through each step to get data from the
 user and execute the command the user enacted.
+
+Iterator:
+    We use the iterator design pattern to iterate through all of relationship data
+whenever we need to print out the relationships for the CLI. We created an
+iterator object that has a next function and something that allows you to access 
+the data that it is currently pointing at. Doing so allows us to abstract the access
+and iteration through the data.
+
+Chain of Responsibility:
+    We use the chain of responsibility design pattern for essentially every function
+our program offers. The view will take in the request and do some processing, where it
+will then pass the main project data to the appropriate API function, along with any
+necessary data, where the API will do the checks for edge cases and errors that may occur,
+which then passes the request and data to the appropriate backend function, where the
+command is processed/fails and an appropriate return value is passed back up the chain.
+This allows the different parts of the "chain" to have a different responsibility depending on
+the state of the program, and each part handles something that the others don't The view
+handles command processing and data input/output, the controller handles edge/error cases and
+communication between the view and model, and the model handles basic format checks and data
+reading/writing. By dividing up these responsibilities into different parts, we can better
+diagnose/pinpoint bugs in our program.
 ```
 

@@ -21,17 +21,32 @@ from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QRectF, QLineF, QPointF
 from PyQt5.QtWidgets import QGraphicsLineItem
 
+# Oberver pattern to update the GUI.
+class Observer():
+    def __init__(self, class_box):
+        self.class_box = class_box
+
+    def update_data(self, new_pos):
+        self.class_box.uml_app.project_data = dbf.json_update_pos(self.class_box.uml_app.project_data, self.class_box.name, new_pos)
+        for relationship in self.class_box.relationships:
+            relationship.update_line()
+        
+
 
 # Makes box in the window when a class is created.
 class ClassBox(QGraphicsRectItem):
-    def __init__(self, name, attributes):
+    def __init__(self, name, attributes, app_instance):
         super(ClassBox, self).__init__()
 
         self.name = name
         self.attributes = attributes
+        self.uml_app = app_instance
+        self.observer = Observer(self)
         self.setRect(0, 0, 200, 100)
 
-        self.setFlag(QGraphicsRectItem.ItemIsSelectable)
+        self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsRectItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsRectItem.ItemSendsGeometryChanges)
 
         # Draw the class name at the top
         self.text = QGraphicsTextItem(self.name, self)
@@ -47,7 +62,15 @@ class ClassBox(QGraphicsRectItem):
         # Adjust size based on text content
         self.adjust_size()
 
-
+    def itemChange(self, change, value):
+        if change == QGraphicsRectItem.ItemPositionHasChanged:
+            pos = {
+                "x": value.x(),
+                "y": value.y(),
+            }
+            self.observer.update_data(pos)
+        return super().itemChange(change, value)
+    
     def format_attributes(self):
         return "".join(self.attributes)
 
@@ -74,38 +97,115 @@ class ClassBox(QGraphicsRectItem):
 
 # Lines made when you create a relationship.
 class RelationshipLine(QGraphicsLineItem):
-    def __init__(self, class_box_a, class_box_b):
+    def __init__(self, class_box_a, class_box_b, scene):
         super(RelationshipLine, self).__init__()
 
         self.class_box_a = class_box_a
         self.class_box_b = class_box_b
+        self.scene = scene
 
         self.class_box_a.add_relationship(self)
         self.class_box_b.add_relationship(self)
 
+        # Initially draw the line
         self.update_line()
 
-    # Functionality for arealtionship line.
     def update_line(self):
+
+        # Define the gap distance to avoid colliding with boxes
+        gap = 150
 
         # Ensure class_box_a is on the left and class_box_b is on the right
         if self.class_box_a.pos().x() > self.class_box_b.pos().x():
             self.class_box_a, self.class_box_b = self.class_box_b, self.class_box_a
 
-        # Middle right point of class_box_a
+        # Calculate start and end points
         start_x = self.class_box_a.rect().right() + self.class_box_a.pos().x()
         start_y = self.class_box_a.rect().center().y() + self.class_box_a.pos().y()
         start_point = QPointF(start_x, start_y)
 
-        # Middle left point of class_box_b
         end_x = self.class_box_b.rect().left() + self.class_box_b.pos().x()
         end_y = self.class_box_b.rect().center().y() + self.class_box_b.pos().y()
         end_point = QPointF(end_x, end_y)
 
-        self.setLine(QLineF(start_point, end_point))
+        # Direct line check: if the line doesn't intersect any boxes, use it
+        direct_line = QLineF(start_point, end_point)
+        if not self.intersects_class_boxes(direct_line):
+            self.setLine(direct_line)
+            return
 
+        # Now the line intersects a box, so we need to route around it.
+        adjusted_points = [start_point]
+        current_point = start_point
+        direction = "horizontal"  # Start with horizontal movement
+
+        attempts = 0
+        attempt_limit = 20  # Prevents endless loop by limiting the number of attempts
+
+        while attempts < attempt_limit:
+            next_point = None
+
+            # Check if the current point needs to move horizontally first
+            if direction == "horizontal":
+                if current_point.x() < end_point.x():
+                    next_point = QPointF(current_point.x() + gap, current_point.y())  # Move right
+                else:
+                    next_point = QPointF(current_point.x() - gap, current_point.y())  # Move left
+
+            # Check if the current point needs to move vertically
+            elif direction == "vertical":
+                if current_point.y() < end_point.y():
+                    next_point = QPointF(current_point.x(), current_point.y() + gap)  # Move down
+                else:
+                    next_point = QPointF(current_point.x(), current_point.y() - gap)  # Move up
+
+            # Check if the next segment intersects with any class boxes
+            new_line = QLineF(current_point, next_point)
+            if not self.intersects_class_boxes(new_line):
+                # Add the valid point and continue
+                adjusted_points.append(next_point)
+                current_point = next_point
+                direction = "vertical" if direction == "horizontal" else "horizontal"  # Toggle direction
+
+            # If the path is sufficiently close to the end point, stop
+            if abs(current_point.x() - end_point.x()) < gap and abs(current_point.y() - end_point.y()) < gap:
+                break
+
+            attempts += 1
+
+        # Add the end point to the path
+        adjusted_points.append(end_point)
+
+        # Draw the path by creating segments between each point
+        for i in range(len(adjusted_points) - 1):
+            segment_line = QLineF(adjusted_points[i], adjusted_points[i + 1])
+            self.scene.addLine(segment_line, QPen(Qt.black, 2))
+
+        # Finally, update the line
+        self.setLine(QLineF(adjusted_points[0], adjusted_points[1]))
+
+
+    def intersects_class_boxes(self, line):
+        for item in self.scene.items():
+            if isinstance(item, ClassBox) and item not in [self.class_box_a, self.class_box_b]:
+                # Get the scene coordinates of the class box's rectangle
+                class_box_rect = item.mapToScene(item.rect()).boundingRect()
+                
+                # Create QLineF objects for each edge of the rectangle
+                left_edge = QLineF(class_box_rect.topLeft(), class_box_rect.bottomLeft())
+                right_edge = QLineF(class_box_rect.topRight(), class_box_rect.bottomRight())
+                top_edge = QLineF(class_box_rect.topLeft(), class_box_rect.topRight())
+                bottom_edge = QLineF(class_box_rect.bottomLeft(), class_box_rect.bottomRight())
+
+                # Check if the proposed line intersects any edge of the rectangle
+                for edge in [left_edge, right_edge, top_edge, bottom_edge]:
+                    intersect_point = QPointF()
+                    if line.intersect(edge, intersect_point) == QLineF.BoundedIntersection:
+                        return True
+        return False
 
     def boundingRect(self):
+        # Adjust bounding box to include both class boxes' positions
         return QRectF(self.class_box_a.rect().bottomLeft() + self.class_box_a.pos(),
                       self.class_box_b.rect().topLeft() + self.class_box_b.pos()).normalized()
 
@@ -114,12 +214,15 @@ class RelationshipLine(QGraphicsLineItem):
         painter.setPen(pen)
         painter.drawLine(self.line())
 
+
+
 # Creates GUI instance when GUI is selected.
 class UMLScene(QGraphicsScene):
     MIN_DISTANCE = 500  # Minimum distance between boxes
 
-    def __init__(self):
+    def __init__(self, app_instance):
         super(UMLScene, self).__init__()
+        self.uml_app = app_instance
         self.setSceneRect(0, 0, 800, 600)
 
     def add_class_box(self, project_data, undo_stack, undo_clicked, redo_stack, position=None):
@@ -166,9 +269,7 @@ class UMLScene(QGraphicsScene):
                         project_data = uf.add_method(project_data, name, method_name, parameters, return_type)
           
 
-            class_box = ClassBox(name, attributes)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
+            class_box = ClassBox(name, attributes, self.uml_app)
 
             if not position:
                 position = self.find_non_overlapping_position(class_box)
@@ -650,7 +751,7 @@ class UMLApp(QMainWindow):
         self.undo_clicked = False
         self.redo_stack = []
 
-        self.scene = UMLScene()
+        self.scene = UMLScene(self)
         self.view = UMLGraphicsView(self.scene)
 
         self.central_widget = QWidget()
@@ -1096,7 +1197,7 @@ class UMLApp(QMainWindow):
             class_box_b = next((box for box in class_boxes if box.name == class_b_name), None)
 
             if class_box_a and class_box_b:
-                relationship = RelationshipLine(class_box_a, class_box_b)
+                relationship = RelationshipLine(class_box_a, class_box_b, self.scene)
                 self.scene.addItem(relationship)
                 if self.undo_clicked:
                     self.redo_stack.clear()
@@ -1215,12 +1316,10 @@ class UMLApp(QMainWindow):
                         methods_used.append(method["name"])
             else:
                 attributes += "None"
-            class_box = ClassBox(name, attributes)
+            class_box = ClassBox(name, attributes, self)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
@@ -1299,12 +1398,10 @@ class UMLApp(QMainWindow):
                         methods_used.append(method["name"])
             else:
                 attributes += "None"
-            class_box = ClassBox(name, attributes)
+            class_box = ClassBox(name, attributes, self)
             position_json = class_["position"]
             position = QPointF(position_json["x"], position_json["y"])
             class_box.setPos(position)
-            # Set the moveable flag
-            class_box.setFlag(QGraphicsRectItem.ItemIsMovable)
             self.scene.addItem(class_box)
 
             # Add relationships
@@ -1322,7 +1419,7 @@ class UMLApp(QMainWindow):
                     if class_box.name == relationship["destination"]:
                         class_box_b = class_box
                 if class_box_a and class_box_b:
-                    relationship_line = RelationshipLine(class_box_a, class_box_b)
+                    relationship_line = RelationshipLine(class_box_a, class_box_b, self.scene)
                     self.scene.addItem(relationship_line)
         
                

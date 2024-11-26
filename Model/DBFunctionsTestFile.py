@@ -436,3 +436,408 @@ def test_json_reset_file(capsys):
         }
     dbf.json_write_file("sprint3_format.json", project_data)
     assert dbf.json_read_file("sprint3_format.json") == project_data
+
+# Test getting the fields of a class with improper format
+def test_fields_improper_format(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+
+            }
+        ]
+    }
+    assert dbf.json_get_fields(stub_data, "Tire") == None
+
+# Test getting the methods of a class with improper format
+def test_methods_improper_format(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+            }
+        ]
+    }
+    assert dbf.json_get_methods(stub_data, "Tire") == None
+
+# Test getting the method of a class with more than one method with the same name
+def test_method_multiple_amount(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void",
+                        "params": [
+                            { "name": "new_psi", "type": "string" }
+                        ]
+                    },
+                    {
+                        "name": "setPSI",
+                        "return_type": "void",
+                        "params": [
+                            { "name": "new_psi", "type": "int" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_get_method(stub_data, "Tire", "setPSI", 2) != None
+
+# Test getting the parameters of a method with improper format
+def test_parameters_improper_format(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void"
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_get_parameters(stub_data, "Tire", "setPSI", 1) == None
+
+# Test adding a field to a class with improper format
+def test_add_field_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_add_field(stub_data, "Tire", { "name": "diameter", "type": "float" }) == None
+
+# Test adding a field to a class with improper format
+def test_add_field_no_field(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_add_field(stub_data, "Tire", { "name": "psi", "type": "int" }) == None
+
+# Test adding a method to a class with improper format
+def test_add_method_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_add_method(stub_data, "Tire", { "name": "setPSI", "return_type": "void", "params": [] }) == None
+
+# Test adding a method to a class with improper format
+def test_add_method_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_add_method(stub_data, "Tire", { "name": "drive", "return_type": "void", "params": [] }) == None
+
+# Test adding a parameter to a method with improper format
+def test_add_parameter_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_add_parameter(stub_data, "Tire", "setPSI", 1, { "name": "new_psi", "type": "string" }) == None
+
+# Test adding a parameter to a method with improper format
+def test_add_parameter_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_add_parameter(stub_data, "Tire", "drive", 1, { "name": "new_psi", "type": "string" }) == None
+
+# Test adding a parameter to a method with no param key
+def test_add_parameter_no_param_key(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void",
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_add_parameter(stub_data, "Tire", "setPSI", 1, { "name": "new_psi", "type": "string" }) == None
+
+# Test renaming a class with improper format
+def test_rename_class_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_rename_class(stub_data, "Tire", "Wheel") == None
+
+# Test renaming a class with no relationship data
+def test_rename_class_no_relationships(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_rename_class(stub_data, "Tire", "Wheel") == None
+
+# Test renaming a class that is the source of a relationship
+def test_rename_class_relationship_source(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": []
+            }
+        ],
+        "relationships": [
+            {
+                "source": "Tire",
+                "destination": "Car",
+                "type": "Composition"
+            }
+        ]
+    }
+    assert dbf.json_rename_class(stub_data, "Tire", "Wheel") != None
+
+# Test updating the position of a class with improper format
+def test_update_class_position_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_update_pos(stub_data, "Tire", { "x": 10, "y": 20 }) == None
+
+# Test renaming a field with improper format
+def test_rename_field_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_rename_field(stub_data, "Tire", "diameter", "size") == None
+
+# Test renaming a field with no field data
+def test_rename_field_no_field(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_rename_field(stub_data, "Tire", "diameter", "size") == None
+
+# Test renaming a method with improper format
+def test_rename_method_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_rename_method(stub_data, "Tire", "setPSI", "setPressure", 1) == None
+
+# Test renaming a method with no method data
+def test_rename_method_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_rename_method(stub_data, "Tire", "setPSI", "setPressure", 1) == None
+
+# Test renaming a parameter with improper format
+def test_rename_parameter_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_rename_parameter(stub_data, "Tire", "setPSI", 1, "new_psi", "old_psi") == None
+
+# Test renaming a parameter with no methods
+def test_rename_parameter_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_rename_parameter(stub_data, "Tire", "setPSI", 1, "new_psi", "old_psi") == None
+
+# Test renaming a parameter with no param key
+def test_rename_parameter_no_param_key(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void"
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_rename_parameter(stub_data, "Tire", "setPSI", 1, "new_psi", "old_psi") == None
+    
+# Test deleting a class with no class data
+def test_delete_class_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_delete_class(stub_data, "Tire") == None
+
+# Test deleting a class with no relationships
+def test_delete_class_no_relationships(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_delete_class(stub_data, "Tire") == None
+
+# Test deleting a field with no class data
+def test_delete_field_no_class(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_delete_field(stub_data, "Tire", "diameter") == None
+
+# Test deleting a field with no field data
+def test_delete_field_no_field(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_delete_field(stub_data, "Tire", "diameter") == None
+
+# Test deleting a method with no class key
+def test_delete_method_no_class(capsys):
+    stub_data = {
+    }
+    assert dbf.json_delete_method(stub_data, "Tire", "setPSI", 1) == None
+
+# Test deleting a method with no class data but a class key
+def test_delete_method_no_class_data(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_delete_method(stub_data, "Tire", "setPSI", 1) == None
+
+# Test deleting a method with no method data
+def test_delete_method_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_delete_method(stub_data, "Tire", "setPSI", 1) == None
+
+# Test deleting a parameter with no class key
+def test_delete_parameter_no_class(capsys):
+    stub_data = {
+    }
+    assert dbf.json_delete_parameter(stub_data, "Tire", "setPSI", 1, "new_psi") == None
+
+# Test deleting a parameter with no class data but a class key
+def test_delete_parameter_no_class_data(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_delete_parameter(stub_data, "Tire", "setPSI", 1, "new_psi") == None
+
+# Test deleting a parameter with no method key
+def test_delete_parameter_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_delete_parameter(stub_data, "Tire", "setPSI", 1, "new_psi") == None
+
+# Test deleting a param with no param key
+def test_delete_param_no_key(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void"
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_delete_parameter(stub_data, "Tire", "setPSI", 1, "new_psi") == None
+
+# Test deleting a param
+def test_delete_param(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire",
+                "fields": [],
+                "methods": [
+                    {
+                        "name": "setPSI",
+                        "return_type": "void",
+                        "params": [
+                            { "name": "new_psi", "type": "string" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+    assert dbf.json_delete_parameter(stub_data, "Tire", "setPSI", 1, "new_psi") != None
+
+# Test deleting all params with no class key
+def test_delete_all_params_no_class(capsys):
+    stub_data = {
+    }
+    assert dbf.json_delete_all_parameters(stub_data, "Tire", "setPSI", 1) == None
+
+# Test deleting all params with no class data but a class key
+def test_delete_all_params_no_class_data(capsys):
+    stub_data = {
+        "classes": []
+    }
+    assert dbf.json_delete_all_parameters(stub_data, "Tire", "setPSI", 1) == None
+
+# Test deleting all params with no method key
+def test_delete_all_params_no_method(capsys):
+    stub_data = {
+        "classes": [
+            {
+                "name": "Tire"
+            }
+        ]
+    }
+    assert dbf.json_delete_all_parameters(stub_data, "Tire", "setPSI", 1) == None
