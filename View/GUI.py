@@ -15,7 +15,7 @@ import random
 from PyQt5.QtWidgets import (
     QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
     QGraphicsTextItem, QVBoxLayout, QDialog, QPushButton, QLineEdit,
-    QLabel, QMainWindow, QWidget, QMessageBox, QInputDialog
+    QLabel, QMainWindow, QWidget, QMessageBox, QInputDialog, QFileDialog
 )
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QRectF, QLineF, QPointF
@@ -652,16 +652,35 @@ class ClassDialog(QDialog):
         return self.fields_list  
     
     def on_save(self, project_data, scene):
-        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
-        if not ok1 or not file_path:
-            return project_data # User canceled or provided no class name
-        # Set the positions for each class box in the project data
+        # Open the native file dialog for saving files
+        file_path, _ = QFileDialog.getSaveFileName(
+            self if isinstance(self, QWidget) else None,
+            "Save Project File",  # Dialog title
+            "",                   # Default save location
+            "JSON Files (*.json)" # Filter for JSON files
+        )
+        
+        # Check if a file was selected
+        if not file_path:
+            return project_data  # User canceled the dialog
+        
+        # Ensure the file has a .json extension
+        if not file_path.lower().endswith('.json'):
+            file_path += '.json'
+        
+        # Update the positions for each class box in the project data
         class_boxes = [item for item in scene.items() if isinstance(item, ClassBox)]
         for class_box in class_boxes:
             class_data = dbf.json_get_class(self.project_data, class_box.name)
             if class_data:
-                project_data = dbf.json_update_pos(project_data, class_box.name, {"x": class_box.pos().x(), "y": class_box.pos().y()})
-        return dbf.json_write_file(file_path, project_data)
+                project_data = dbf.json_update_pos(project_data, class_box.name, {
+                    "x": class_box.pos().x(),
+                    "y": class_box.pos().y()
+                })
+        
+        # Write the project data to the specified file
+        dbf.json_write_file(file_path, project_data)
+        return project_data
 
     def on_load(self, project_data, scene):
         save = QMessageBox.question(self if isinstance(self, QWidget) else None, "Save", "Would you like to save before loading?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
@@ -669,9 +688,16 @@ class ClassDialog(QDialog):
             return None
         if save == QMessageBox.Yes:
             ClassDialog.on_save(self, project_data, scene)
-        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
-        if not ok1 or not file_path:
-            return None # User canceled or provided no class name
+        # Open the native file dialog and filter for JSON files
+        file_path, _ = QFileDialog.getOpenFileName(
+            self if isinstance(self, QWidget) else None,
+            "Open Project File",  # Dialog title
+            "",                   # Initial directory (empty string defaults to user's home directory)
+            "JSON Files (*.json);;All Files (*)"  # Filter for JSON files
+        )
+        if not file_path:
+            return project_data # User canceled or provided no class name
+        
         project_data = dbf.json_read_file(file_path)
         return project_data
 
@@ -1337,7 +1363,7 @@ class UMLApp(QMainWindow):
                     if class_box.name == relationship["destination"]:
                         class_box_b = class_box
                 if class_box_a and class_box_b:
-                    relationship_line = RelationshipLine(class_box_a, class_box_b)
+                    relationship_line = RelationshipLine(class_box_a, class_box_b, self.scene)
                     self.scene.addItem(relationship_line)
 
     def on_undo(self):
