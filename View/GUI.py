@@ -652,16 +652,35 @@ class ClassDialog(QDialog):
         return self.fields_list  
     
     def on_save(self, project_data, scene):
-        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
-        if not ok1 or not file_path:
-            return project_data # User canceled or provided no class name
-        # Set the positions for each class box in the project data
+        # Open the native file dialog for saving files
+        file_path, _ = QFileDialog.getSaveFileName(
+            self if isinstance(self, QWidget) else None,
+            "Save Project File",  # Dialog title
+            "",                   # Default save location
+            "JSON Files (*.json)" # Filter for JSON files
+        )
+        
+        # Check if a file was selected
+        if not file_path:
+            return project_data  # User canceled the dialog
+        
+        # Ensure the file has a .json extension
+        if not file_path.lower().endswith('.json'):
+            file_path += '.json'
+        
+        # Update the positions for each class box in the project data
         class_boxes = [item for item in scene.items() if isinstance(item, ClassBox)]
         for class_box in class_boxes:
             class_data = dbf.json_get_class(self.project_data, class_box.name)
             if class_data:
-                project_data = dbf.json_update_pos(project_data, class_box.name, {"x": class_box.pos().x(), "y": class_box.pos().y()})
-        return dbf.json_write_file(file_path, project_data)
+                project_data = dbf.json_update_pos(project_data, class_box.name, {
+                    "x": class_box.pos().x(),
+                    "y": class_box.pos().y()
+                })
+        
+        # Write the project data to the specified file
+        dbf.json_write_file(file_path, project_data)
+        return project_data
 
     def on_load(self, project_data, scene):
         save = QMessageBox.question(self if isinstance(self, QWidget) else None, "Save", "Would you like to save before loading?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
