@@ -15,7 +15,7 @@ import random
 from PyQt5.QtWidgets import (
     QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
     QGraphicsTextItem, QVBoxLayout, QDialog, QPushButton, QLineEdit,
-    QLabel, QMainWindow, QWidget, QMessageBox, QInputDialog
+    QLabel, QMainWindow, QWidget, QMessageBox, QInputDialog, QFileDialog
 )
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QRectF, QLineF, QPointF
@@ -669,9 +669,16 @@ class ClassDialog(QDialog):
             return None
         if save == QMessageBox.Yes:
             ClassDialog.on_save(self, project_data, scene)
-        file_path, ok1 = QInputDialog.getText(self if isinstance(self, QWidget) else None, "File Path", "Enter the file path:")
-        if not ok1 or not file_path:
-            return None # User canceled or provided no class name
+        # Open the native file dialog and filter for JSON files
+        file_path, _ = QFileDialog.getOpenFileName(
+            self if isinstance(self, QWidget) else None,
+            "Open Project File",  # Dialog title
+            "",                   # Initial directory (empty string defaults to user's home directory)
+            "JSON Files (*.json);;All Files (*)"  # Filter for JSON files
+        )
+        if not file_path:
+            return project_data # User canceled or provided no class name
+        
         project_data = dbf.json_read_file(file_path)
         return project_data
 
@@ -1337,7 +1344,7 @@ class UMLApp(QMainWindow):
                     if class_box.name == relationship["destination"]:
                         class_box_b = class_box
                 if class_box_a and class_box_b:
-                    relationship_line = RelationshipLine(class_box_a, class_box_b)
+                    relationship_line = RelationshipLine(class_box_a, class_box_b, self.scene)
                     self.scene.addItem(relationship_line)
 
     def on_undo(self):
